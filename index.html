@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitFuel App</title>
+    <!-- Tailwind CSS from CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Inter Font -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Main App Container -->
+    <div id="app" class="flex flex-col flex-1">
+
+        <!-- Header -->
+        <header class="sticky top-0 z-40 bg-white shadow-sm">
+            <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+                <h1 class="text-2xl font-bold text-blue-600">FitFuel</h1>
+                <nav class="flex items-center gap-4">
+                    <button id="nav-meal-planner" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat mr-2 h-4 w-4"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
+                        Meal Planner
+                    </button>
+                    <button id="nav-workout-planner" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell mr-2 h-4 w-4"><path d="m6.5 13.5-1.5 1.5a2.12 2.12 0 0 0 3 3L8 16.5m5-5 5-5a2.12 2.12 0 0 0-3-3l-1.5 1.5m-5 5 5 5m0 0 1.5 1.5a2.12 2.12 0 0 0 3-3L16.5 13.5m-5-5-5-5m0 0a2.12 2.12 0 0 0-3 3L6.5 8.5m5-5-5-5a2.12 2.12 0 0 0-3 3L3.5 6.5m10-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+                        Workout Planner
+                    </button>
+                    <button id="add-profile-btn" class="hidden sm:inline-flex items-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-blue-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user mr-2 h-4 w-4"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        Add Profile
+                    </button>
+                    <button id="manage-profiles-btn" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users mr-2 h-4 w-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Profiles
+                    </button>
+                </nav>
+            </div>
+            <!-- Mobile Navigation -->
+            <div class="sm:hidden flex justify-around bg-white border-t border-gray-200">
+                <button id="nav-meal-planner-mobile" class="flex-1 rounded-none py-3 text-gray-500 hover:text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat h-5 w-5 mx-auto"></svg>
+                </button>
+                <button id="nav-workout-planner-mobile" class="flex-1 rounded-none py-3 text-gray-500 hover:text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell h-5 w-5 mx-auto"></svg>
+                </button>
+                <button id="nav-profiles-mobile" class="flex-1 rounded-none py-3 text-gray-500 hover:text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users h-5 w-5 mx-auto"></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="main-content" class="flex-1 container mx-auto px-4 py-6">
+            <!-- Dynamic content will be injected here -->
+        </main>
+
+        <!-- Footer -->
+        <footer class="py-4 text-center text-sm text-gray-500 border-t">
+            <p>FitFuel &copy; 2024</p>
+            <p id="user-id-display">User ID: Loading...</p>
+        </footer>
+
+    </div>
+
+    <!-- Alert/Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-2"></div>
+
+    <!-- Modals -->
+    <div id="modal-container">
+        <!-- Profile Modal -->
+        <div id="profile-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+            <div class="bg-white rounded-lg p-6 max-w-md mx-auto w-full shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="profile-modal-title" class="text-2xl font-bold">Create New Profile</h3>
+                    <button onclick="closeModal('profile-modal')" class="text-gray-500 hover:text-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <p id="profile-modal-description" class="text-sm text-gray-500 mb-4">Enter your details to get personalized plans.</p>
+                <form id="profile-form" class="grid gap-4 py-4">
+                    <input type="hidden" id="profile-id">
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="name" class="text-right text-sm font-medium text-gray-700">Name</label>
+                        <input type="text" id="name" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="age" class="text-right text-sm font-medium text-gray-700">Age</label>
+                        <input type="number" id="age" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="gender" class="text-right text-sm font-medium text-gray-700">Gender</label>
+                        <select id="gender" class="col-span-3 w-full px-3 py-2 border rounded-md">
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="weight" class="text-right text-sm font-medium text-gray-700">Weight (kg)</label>
+                        <input type="number" id="weight" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="height" class="text-right text-sm font-medium text-gray-700">Height (cm)</label>
+                        <input type="number" id="height" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="fitnessGoal" class="text-right text-sm font-medium text-gray-700">Goal</label>
+                        <select id="fitnessGoal" class="col-span-3 w-full px-3 py-2 border rounded-md">
+                            <option value="weight loss">Weight Loss</option>
+                            <option value="muscle gain">Muscle Gain</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="activityLevel" class="text-right text-sm font-medium text-gray-700">Activity</label>
+                        <select id="activityLevel" class="col-span-3 w-full px-3 py-2 border rounded-md">
+                            <option value="sedentary">Sedentary</option>
+                            <option value="lightly active">Lightly Active</option>
+                            <option value="moderately active">Moderately Active</option>
+                            <option value="very active">Very Active</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="dietaryPreferences" class="text-right text-sm font-medium text-gray-700">Dietary</label>
+                        <input type="text" id="dietaryPreferences" placeholder="e.g., Vegetarian, Keto" class="col-span-3 w-full px-3 py-2 border rounded-md">
+                    </div>
+                    <div class="grid grid-cols-4 items-center gap-4">
+                        <label for="allergies" class="text-right text-sm font-medium text-gray-700">Allergies</label>
+                        <input type="text" id="allergies" placeholder="e.g., Peanuts, Dairy" class="col-span-3 w-full px-3 py-2 border rounded-md">
+                    </div>
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button type="button" onclick="closeModal('profile-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300">Cancel</button>
+                        <button type="submit" id="save-profile-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
+            <div class="bg-white rounded-lg p-6 max-w-sm mx-auto w-full shadow-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-2xl font-bold">Are you sure?</h3>
+                    <button onclick="closeModal('delete-modal')" class="text-gray-500 hover:text-gray-800">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </button>
+                </div>
+                <p id="delete-modal-description" class="text-sm text-gray-500 mb-4">This action cannot be undone. This will permanently delete the profile and all associated data.</p>
+                <div class="flex justify-end gap-2 mt-4">
+                    <button type="button" onclick="closeModal('delete-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300">Cancel</button>
+                    <button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">Continue</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // IMPORTANT: Replace with your actual Firebase project configuration
+        // You can get this from your Firebase project settings page.
+        // All these values must be strings.
+        const firebaseConfig = {
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        let userId = null;
+        let profiles = [];
+        let currentProfile = null;
+        let mealPlan = null;
+        let workoutPlan = null;
+        let currentEditingProfile = null;
+        let currentPage = 'home';
+        let isLoading = false;
+        let activeTabIndex = 'Monday';
+
+        // --- Mock API Responses (for demonstration) ---
+        const mockMealPlan = {
+            "weeklyPlan": [
+                { "day": "Monday", "meals": [{ "name": "Breakfast", "description": "Oatmeal with berries and almonds.", "calories": 350 }, { "name": "Lunch", "description": "Grilled chicken salad.", "calories": 450 }, { "name": "Dinner", "description": "Baked salmon with roasted asparagus.", "calories": 500 }] },
+                { "day": "Tuesday", "meals": [{ "name": "Breakfast", "description": "Scrambled eggs with spinach.", "calories": 380 }, { "name": "Lunch", "description": "Leftover salmon.", "calories": 500 }, { "name": "Dinner", "description": "Turkey meatballs with zucchini noodles.", "calories": 480 }] },
+                { "day": "Wednesday", "meals": [{ "name": "Breakfast", "description": "Greek yogurt with granola.", "calories": 300 }, { "name": "Lunch", "description": "Turkey meatballs with zucchini noodles.", "calories": 480 }, { "name": "Dinner", "description": "Lentil soup.", "calories": 450 }] },
+                { "day": "Thursday", "meals": [{ "name": "Breakfast", "description": "Protein smoothie.", "calories": 350 }, { "name": "Lunch", "description": "Lentil soup.", "calories": 450 }, { "name": "Dinner", "description": "Chicken stir-fry.", "calories": 520 }] },
+                { "day": "Friday", "meals": [{ "name": "Breakfast", "description": "Oatmeal with berries.", "calories": 350 }, { "name": "Lunch", "description": "Chicken stir-fry.", "calories": 520 }, { "name": "Dinner", "description": "Homemade veggie pizza.", "calories": 600 }] },
+                { "day": "Saturday", "meals": [{ "name": "Breakfast", "description": "Scrambled eggs with spinach.", "calories": 380 }, { "name": "Lunch", "description": "Homemade pizza leftovers.", "calories": 600 }, { "name": "Dinner", "description": "Lean beef burgers.", "calories": 650 }] },
+                { "day": "Sunday", "meals": [{ "name": "Breakfast", "description": "Protein smoothie.", "calories": 350 }, { "name": "Lunch", "description": "Lean beef burgers.", "calories": 650 }, { "name": "Dinner", "description": "Roasted chicken.", "calories": 580 }] }
+            ]
+        };
+
+        const mockWorkoutPlan = {
+            "monthlyPlan": [
+                { "day": "Day 1", "focus": "Full Body Strength", "exercises": [{ "name": "Squats", "sets": 3, "reps": "8-10", "rest": "60s", "description": "Lower your hips as if sitting in a chair.", "video": "https://www.youtube.com/embed/videoseries" }] },
+                { "day": "Day 2", "focus": "Cardio & Core", "exercises": [{ "name": "Running", "sets": 1, "reps": "30 minutes", "rest": "n/a", "description": "Brisk jog or run.", "video": "https://www.youtube.com/embed/videoseries" }, { "name": "Plank", "sets": 3, "reps": "hold for 60s", "rest": "30s", "description": "Hold a plank position.", "video": "https://www.youtube.com/embed/videoseries" }] },
+                { "day": "Day 3", "focus": "Rest Day", "exercises": [] },
+                { "day": "Day 4", "focus": "Upper Body Strength", "exercises": [{ "name": "Overhead Press", "sets": 3, "reps": "8-10", "rest": "60s", "description": "Press a dumbbell or barbell overhead.", "video": "https://www.youtube.com/embed/videoseries" }] },
+                { "day": "Day 5", "focus": "Lower Body Strength", "exercises": [{ "name": "Lunges", "sets": 3, "reps": "10-12 per leg", "rest": "60s", "description": "Step forward with one leg and lower your hips.", "video": "https://www.youtube.com/embed/videoseries" }] },
+                { "day": "Day 6", "focus": "Active Recovery", "exercises": [{ "name": "Walking", "sets": 1, "reps": "45 minutes", "rest": "n/a", "description": "A light walk to keep the blood flowing.", "video": "https://www.youtube.com/embed/videoseries" }] },
+                { "day": "Day 7", "focus": "Rest Day", "exercises": [] }
+            ]
+        };
+
+        // --- UI Rendering Functions ---
+
+        /** Renders the main page content based on the current page state. */
+        const renderPage = () => {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
+
+            // Clear previous content
+            mainContent.innerHTML = '';
+            
+            // Render a welcome page if no profiles exist
+            if (profiles.length === 0) {
+                renderHomePage();
+                return;
+            }
+
+            // Render active profile header
+            mainContent.innerHTML += `
+                <div class="flex justify-between items-center mb-6 p-4 bg-white rounded-lg shadow-sm">
+                    <h2 class="text-xl font-semibold text-gray-800">
+                        Active Profile: <span class="text-blue-600">${currentProfile.name}</span>
+                    </h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="editProfile('${currentProfile.id}')" class="p-2 rounded-full text-gray-500 hover:text-blue-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit h-5 w-5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                        </button>
+                        <button onclick="confirmDeleteProfile('${currentProfile.id}')" class="p-2 rounded-full text-gray-500 hover:text-red-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-5 w-5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Render specific page content
+            switch (currentPage) {
+                case 'home':
+                    mainContent.innerHTML += getHomePageHTML();
+                    break;
+                case 'meal-planner':
+                    mainContent.innerHTML += getMealPlannerHTML();
+                    break;
+                case 'workout-planner':
+                    mainContent.innerHTML += getWorkoutPlannerHTML();
+                    break;
+                case 'profiles':
+                    mainContent.innerHTML += getProfileManagerHTML();
+                    break;
+            }
+            lucide.createIcons();
+            addEventListeners();
+        };
+        
+        const renderHomePage = () => {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
+            mainContent.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-[calc(100vh-180px)] text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to FitFuel!</h2>
+                    <p class="text-gray-600 mb-6 max-w-md">
+                        To get started, please create your first profile. This will allow the app to generate personalized meal and workout plans for you.
+                    </p>
+                    <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Create First Profile
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+        };
+
+        // --- HTML String Generation Functions ---
+
+        const getHomePageHTML = () => {
+            return `
+                <div class="text-center p-8 bg-white rounded-xl shadow-lg">
+                    <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Welcome to FitFuel!</h2>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
+                        FitFuel is your all-in-one companion for a healthier lifestyle.
+                        Create personalized profiles to get tailored workout plans and weekly meal plans that align with your fitness goals.
+                        Track your progress, manage your shopping list, and stay motivated.
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-6 mt-8">
+                        <div class="bg-white rounded-xl shadow-lg p-6 flex-1">
+                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2 text-blue-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell"><path d="m6.5 13.5-1.5 1.5a2.12 2.12 0 0 0 3 3L8 16.5m5-5 5-5a2.12 2.12 0 0 0-3-3l-1.5 1.5m-5 5 5 5m0 0 1.5 1.5a2.12 2.12 0 0 0 3-3L16.5 13.5m-5-5-5-5m0 0a2.12 2.12 0 0 0-3 3L6.5 8.5m5-5-5-5a2.12 2.12 0 0 0-3 3L3.5 6.5m10-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+                                Workout
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-2">Tailored monthly plans to reach your fitness goals.</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 flex-1">
+                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2 text-green-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
+                                Nutrition
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-2">Personalized weekly meal plans and shopping lists.</p>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-lg p-6 flex-1">
+                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2 text-purple-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Group Plans
+                            </h3>
+                            <p class="text-sm text-gray-500 mt-2">Cook for everyone with combined meal and shopping lists.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const getProfileManagerHTML = () => {
+            const profilesHtml = profiles.length > 0 ? profiles.map(profile => `
+                <div class="flex items-center justify-between p-4 border rounded-lg mb-2 bg-gray-50">
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-lg">${profile.name}</h4>
+                        <p class="text-sm text-gray-500">Goal: ${profile.fitnessGoal} | BMI: ${profile.bmi}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="editProfile('${profile.id}')" class="p-2 rounded-full text-gray-500 hover:text-blue-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit h-4 w-4"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
+                        </button>
+                        <button onclick="confirmDeleteProfile('${profile.id}')" class="p-2 rounded-full text-gray-500 hover:text-red-600 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-4 w-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        </button>
+                        <button onclick="switchProfile('${profile.id}')" ${currentProfile?.id === profile.id ? 'disabled' : ''} class="px-4 py-2 text-sm font-semibold rounded-md transition-colors ${currentProfile?.id === profile.id ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}">
+                            ${currentProfile?.id === profile.id ? 'Active' : 'Switch'}
+                        </button>
+                    </div>
+                </div>
+            `).join('') : '<p class="text-center text-gray-500">No profiles found. Create one to get started.</p>';
+
+            return `
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="mb-4">
+                        <h3 class="text-2xl font-bold">Profiles</h3>
+                        <p class="text-sm text-gray-500">Create, manage, and switch between multiple user profiles.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                            Create New Profile
+                        </button>
+                        <hr class="h-[1px] bg-gray-200 my-4">
+                        <div class="overflow-y-auto h-[400px]">
+                            ${profilesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const getMealPlannerHTML = () => {
+            const tabsHtml = mealPlan ? mealPlan.weeklyPlan.map((day, index) => `
+                <button
+                    onclick="switchMealDay('${day.day}')"
+                    class="flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTabIndex === day.day ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}"
+                >${day.day}</button>
+            `).join('') : '';
+
+            const contentHtml = mealPlan ? mealPlan.weeklyPlan.map(day => `
+                <div id="meal-tab-${day.day}" class="${activeTabIndex === day.day ? '' : 'hidden'} p-4">
+                    <div class="bg-white rounded-xl p-0 space-y-4">
+                        ${day.meals.map(meal => `
+                            <div class="flex items-start gap-4 p-4 border rounded-lg bg-gray-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat h-5 w-5 text-blue-600 mt-1"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-lg">${meal.name}</h4>
+                                    <p class="text-gray-600">${meal.description}</p>
+                                    <p class="text-sm text-gray-500">Approx. ${meal.calories} kcal</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('') : '';
+
+            const groupProfilesHtml = profiles.map(profile => `
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="group-profile-${profile.id}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-id="${profile.id}">
+                    <label for="group-profile-${profile.id}" class="text-sm font-medium text-gray-700">${profile.name}</label>
+                </div>
+            `).join('');
+
+            return `
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="mb-4">
+                        <h3 class="text-2xl font-bold">Meal Planner</h3>
+                        <p class="text-sm text-gray-500">Generate and manage personalized weekly meal plans.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <button id="generate-meal-plan-btn" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+                            <span id="meal-plan-loading-icon" class="hidden animate-spin h-5 w-5 text-white mr-3">
+                                <svg class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"></svg>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat h-4 w-4 mr-2" id="meal-plan-icon"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
+                            Generate Meal Plan
+                        </button>
+                        <button id="view-shopping-list-btn" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-todo h-4 w-4 mr-2" id="shopping-list-icon"><rect x="3" y="5" width="6" height="6" rx="1"/><path d="m13 12-2 2 4 4"/><path d="m13 18 4-4"/><path d="M16 5h.01"/><path d="M19 5h.01"/></svg>
+                            View Shopping List
+                        </button>
+                    </div>
+
+                    <div id="meal-plan-content">
+                        ${mealPlan ? `
+                            <div class="mt-6">
+                                <h3 class="text-lg font-semibold mb-2">Current Meal Plan</h3>
+                                <div class="w-full whitespace-nowrap rounded-md border overflow-x-auto bg-gray-100 p-1">
+                                    <div class="flex justify-start">
+                                        ${tabsHtml}
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    ${contentHtml}
+                                </div>
+                            </div>
+                        ` : `<p class="text-center text-gray-500">Generate a meal plan to see it here.</p>`}
+                    </div>
+
+                    <div id="shopping-list-content" class="hidden mt-6">
+                        <!-- Shopping list content will be dynamically injected here -->
+                    </div>
+
+                    <div id="group-plan-controls" class="mt-6">
+                        <hr class="h-[1px] bg-gray-200 my-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="text-lg font-bold text-gray-800">Create a Group Plan</h4>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" value="" class="sr-only peer" id="group-plan-toggle">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                            </label>
+                        </div>
+                        <div id="group-profiles-list" class="hidden mt-4 space-y-2">
+                            ${groupProfilesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const getWorkoutPlannerHTML = () => {
+            const tabsHtml = workoutPlan ? workoutPlan.monthlyPlan.map((day, index) => `
+                <button
+                    onclick="switchWorkoutDay('${day.day}')"
+                    class="flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTabIndex === day.day ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}"
+                >${day.day} ${workoutPlan.completedWorkouts.includes(index) ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check-circle h-4 w-4 ml-1 text-green-500"><path d="M22 11.08V12a10 10 0 1 1-5.93-8.72"/><path d="M9 11l3 3L22 4"/></svg>' : ''}</button>
+            `).join('') : '';
+
+            const contentHtml = workoutPlan ? workoutPlan.monthlyPlan.map((day, index) => `
+                <div id="workout-tab-${day.day.replace(/\s/g, '-')}" class="${activeTabIndex === day.day ? '' : 'hidden'} p-4">
+                    <div class="bg-white rounded-xl p-6">
+                        <h4 class="text-xl font-bold mb-2">${day.focus}</h4>
+                        <p class="text-sm text-gray-500 mb-4">${day.exercises.length > 0 ? 'Click to expand exercise details.' : 'Enjoy your rest day!'}</p>
+                        <button onclick="showWorkoutDetails('${day.day.replace(/\s/g, '-')}')" class="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors" ${day.exercises.length === 0 ? 'disabled' : ''}>
+                            ${day.exercises.length > 0 ? 'Show Workout Details' : 'Rest Day'}
+                        </button>
+                        <div class="flex items-center justify-between mt-4">
+                            <div class="flex items-center gap-2">
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer" onchange="toggleWorkoutCompletion(${index})" ${workoutPlan.completedWorkouts.includes(index) ? 'checked' : ''}>
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                                </label>
+                                <span class="text-sm font-medium text-gray-700">Mark as Completed</span>
+                            </div>
+                            <p class="text-sm font-medium ${workoutPlan.completedWorkouts.includes(index) ? 'text-green-600' : 'text-gray-500'}">
+                                ${workoutPlan.completedWorkouts.includes(index) ? 'Completed!' : 'Not Completed'}
+                            </p>
+                        </div>
+                    </div>
+                    <div id="workout-details-${day.day.replace(/\s/g, '-')}" class="hidden mt-4 space-y-4">
+                        ${day.exercises.map(exercise => `
+                            <div class="bg-white rounded-xl shadow-lg p-6">
+                                <h4 class="text-xl font-bold mb-2">${exercise.name}</h4>
+                                <p class="text-gray-600">${exercise.description}</p>
+                                <ul class="text-sm text-gray-500 mt-2">
+                                    <li>Sets: ${exercise.sets}</li>
+                                    <li>Reps: ${exercise.reps}</li>
+                                    <li>Rest: ${exercise.rest}</li>
+                                </ul>
+                                ${exercise.video ? `<div class="mt-4"><iframe class="w-full aspect-video rounded-lg" src="${exercise.video}" title="Workout video" allowfullscreen></iframe></div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('') : '';
+
+            return `
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="mb-4">
+                        <h3 class="text-2xl font-bold">Workout Planner</h3>
+                        <p class="text-sm text-gray-500">Generate and track personalized monthly workout plans.</p>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                        <button id="generate-workout-plan-btn" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+                            <span id="workout-plan-loading-icon" class="hidden animate-spin h-5 w-5 text-white mr-3">
+                                <svg class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"></svg>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell h-4 w-4 mr-2" id="workout-plan-icon"><path d="m6.5 13.5-1.5 1.5a2.12 2.12 0 0 0 3 3L8 16.5m5-5 5-5a2.12 2.12 0 0 0-3-3l-1.5 1.5m-5 5 5 5m0 0 1.5 1.5a2.12 2.12 0 0 0 3-3L16.5 13.5m-5-5-5-5m0 0a2.12 2.12 0 0 0-3 3L6.5 8.5m5-5-5-5a2.12 2.12 0 0 0-3 3L3.5 6.5m10-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+                            Generate Workout Plan
+                        </button>
+                    </div>
+
+                    ${workoutPlan ? `
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold mb-2">Current Workout Plan</h3>
+                            <div class="w-full whitespace-nowrap rounded-md border overflow-x-auto bg-gray-100 p-1">
+                                <div class="flex justify-start">
+                                    ${tabsHtml}
+                                </div>
+                            </div>
+                            <div class="mt-2">
+                                ${contentHtml}
+                            </div>
+                        </div>
+                    ` : `<p class="text-center text-gray-500">Generate a workout plan to see it here.</p>`}
+                </div>
+            `;
+        };
+
+        // --- Data & Logic Functions ---
+
+        /** Shows a toast message */
+        const showToast = (message, type = 'success') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            let bgColor = 'bg-green-500';
+            if (type === 'error') bgColor = 'bg-red-500';
+
+            toast.className = `p-4 rounded-md text-white shadow-lg flex items-center gap-2 ${bgColor}`;
+            toast.innerHTML = `<p>${message}</p>`;
+
+            container.prepend(toast);
+            setTimeout(() => toast.remove(), 5000);
+        };
+
+        /** Opens a modal and initializes form data */
+        const openModal = (id, data = null) => {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('hidden');
+
+            if (id === 'profile-modal' && data) {
+                document.getElementById('profile-id').value = data.id || '';
+                document.getElementById('name').value = data.name || '';
+                document.getElementById('age').value = data.age || '';
+                document.getElementById('gender').value = data.gender || 'male';
+                document.getElementById('weight').value = data.weight || '';
+                document.getElementById('height').value = data.height || '';
+                document.getElementById('dietaryPreferences').value = data.dietaryPreferences || '';
+                document.getElementById('allergies').value = data.allergies || '';
+                document.getElementById('fitnessGoal').value = data.fitnessGoal || 'maintenance';
+                document.getElementById('activityLevel').value = data.activityLevel || 'sedentary';
+                document.getElementById('profile-modal-title').textContent = 'Edit Profile';
+            } else if (id === 'profile-modal') {
+                document.getElementById('profile-form').reset();
+                document.getElementById('profile-id').value = '';
+                document.getElementById('profile-modal-title').textContent = 'Create New Profile';
+            }
+        };
+
+        /** Closes a modal */
+        const closeModal = (id) => {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('hidden');
+        };
+
+        /** Saves a profile to Firestore */
+        const saveProfile = async (e) => {
+            e.preventDefault();
+            if (!userId) return;
+
+            const profileData = {
+                id: document.getElementById('profile-id').value || null,
+                name: document.getElementById('name').value,
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value,
+                weight: document.getElementById('weight').value,
+                height: document.getElementById('height').value,
+                dietaryPreferences: document.getElementById('dietaryPreferences').value,
+                allergies: document.getElementById('allergies').value,
+                fitnessGoal: document.getElementById('fitnessGoal').value,
+                activityLevel: document.getElementById('activityLevel').value,
+            };
+
+            if (!profileData.name || !profileData.age || !profileData.weight || !profileData.height) {
+                showToast("Please fill in all required fields.", 'error');
+                return;
+            }
+
+            profileData.bmi = (profileData.weight / ((profileData.height / 100) ** 2)).toFixed(2);
+            isLoading = true;
+
+            try {
+                if (profileData.id) {
+                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, profileData.id);
+                    await setDoc(docRef, profileData);
+                    showToast("Profile updated successfully.");
+                } else {
+                    const profilesRef = collection(db, `artifacts/${appId}/users/${userId}/profiles`);
+                    await addDoc(profilesRef, profileData);
+                    showToast("New profile created.");
+                }
+                closeModal('profile-modal');
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                showToast("Failed to save profile. Please try again.", 'error');
+            } finally {
+                isLoading = false;
+            }
+        };
+
+        /** Deletes a profile */
+        const deleteProfile = async (profileId) => {
+            if (!userId || !profileId) return;
+            isLoading = true;
+            try {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, profileId);
+                await deleteDoc(docRef);
+                showToast("Profile and associated plans deleted.");
+                closeModal('delete-modal');
+            } catch (error) {
+                console.error("Error deleting profile:", error);
+                showToast("Failed to delete profile. Please try again.", 'error');
+            } finally {
+                isLoading = false;
+            }
+        };
+
+        /** Sets up the delete confirmation modal */
+        window.confirmDeleteProfile = (profileId) => {
+            currentEditingProfile = profiles.find(p => p.id === profileId);
+            if (currentEditingProfile) {
+                document.getElementById('delete-modal-description').innerHTML = `This action cannot be undone. This will permanently delete the profile for **${currentEditingProfile.name}** and all associated data.`;
+                openModal('delete-modal');
+            }
+        };
+
+        /** Generates and saves a meal plan */
+        const generateMealPlan = async () => {
+            if (!currentProfile) {
+                showToast("Please select or create a profile first.", 'error');
+                return;
+            }
+            isLoading = true;
+            updateLoadingState('meal-plan');
+            try {
+                const newPlan = {
+                    ...mockMealPlan,
+                    createdAt: new Date(),
+                    profileId: currentProfile.id,
+                    profileName: currentProfile.name
+                };
+                mealPlan = newPlan;
+                await saveMealPlanToHistory(newPlan);
+                showToast("Meal plan generated successfully!");
+            } catch (error) {
+                console.error("Error generating meal plan:", error);
+                showToast("Failed to generate meal plan. Please try again.", 'error');
+            } finally {
+                isLoading = false;
+                updateLoadingState('meal-plan');
+                renderPage(); // Re-render to show the new plan
+            }
+        };
+
+        /** Saves a meal plan to history */
+        const saveMealPlanToHistory = async (plan) => {
+            if (!db || !userId || !plan) return;
+            try {
+                const plansRef = collection(db, `artifacts/${appId}/users/${userId}/mealPlans`);
+                await addDoc(plansRef, plan);
+            } catch (error) {
+                console.error("Error saving meal plan to history:", error);
+            }
+        };
+
+        /** Generates and saves a workout plan */
+        const generateWorkoutPlan = async () => {
+            if (!currentProfile) {
+                showToast("Please select or create a profile first.", 'error');
+                return;
+            }
+            isLoading = true;
+            updateLoadingState('workout-plan');
+            try {
+                const newPlan = {
+                    ...mockWorkoutPlan,
+                    createdAt: new Date(),
+                    profileId: currentProfile.id,
+                    profileName: currentProfile.name,
+                    completedWorkouts: [],
+                };
+                workoutPlan = newPlan;
+                await saveWorkoutPlanToHistory(newPlan);
+                showToast("Workout plan generated successfully!");
+            } catch (error) {
+                console.error("Error generating workout plan:", error);
+                showToast("Failed to generate workout plan. Please try again.", 'error');
+            } finally {
+                isLoading = false;
+                updateLoadingState('workout-plan');
+                renderPage(); // Re-render to show the new plan
+            }
+        };
+
+        /** Saves a workout plan to history */
+        const saveWorkoutPlanToHistory = async (plan) => {
+            if (!db || !userId || !plan) return;
+            try {
+                const plansRef = collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`);
+                await addDoc(plansRef, plan);
+            } catch (error) {
+                console.error("Error saving workout plan to history:", error);
+            }
+        };
+
+        /** Toggles workout completion status */
+        window.toggleWorkoutCompletion = async (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            // Update in Firestore
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                await updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            renderPage();
+        };
+
+        /** Toggles the group plan profile list */
+        const toggleGroupPlan = () => {
+            const list = document.getElementById('group-profiles-list');
+            if (list) {
+                list.classList.toggle('hidden');
+            }
+        };
+
+        /** Updates the loading state of buttons */
+        const updateLoadingState = (planType) => {
+            const button = document.getElementById(`${planType}-btn`);
+            const icon = document.getElementById(`${planType}-icon`);
+            const loadingIcon = document.getElementById(`${planType}-loading-icon`);
+
+            if (isLoading) {
+                button.disabled = true;
+                icon.classList.add('hidden');
+                loadingIcon.classList.remove('hidden');
+            } else {
+                button.disabled = false;
+                icon.classList.remove('hidden');
+                loadingIcon.classList.add('hidden');
+            }
+        };
+
+        /** Event listeners for dynamic content */
+        const addEventListeners = () => {
+            // Main navigation
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = generateMealPlan;
+            
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+
+            const groupPlanToggle = document.getElementById('group-plan-toggle');
+            if (groupPlanToggle) groupPlanToggle.onchange = toggleGroupPlan;
+        };
+
+        /** Initialize the app */
+        const init = async () => {
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                    }
+                }
+                userId = auth.currentUser?.uid || crypto.randomUUID();
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                // Set up real-time listeners after authentication
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        // If we are on the meal planner page, re-render to show the latest plan.
+                        if (currentPage === 'meal-planner') renderPage();
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        // If we are on the workout planner page, re-render to show the latest plan.
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+
+            addEventListeners();
+        };
+
+        // Global functions for inline event handlers
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            document.querySelectorAll('#meal-plan-content button').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
+            document.querySelectorAll('#meal-plan-content button').forEach(btn => {
+                if (btn.textContent.includes(day)) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                }
+            });
+            document.querySelectorAll('[id^="meal-tab-"]').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`meal-tab-${day}`).classList.remove('hidden');
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            document.querySelectorAll('#workout-planner-content button').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
+            document.querySelectorAll('#workout-planner-content button').forEach(btn => {
+                if (btn.textContent.includes(day)) {
+                    btn.classList.add('bg-blue-600', 'text-white');
+                }
+            });
+            document.querySelectorAll('[id^="workout-tab-"]').forEach(tab => tab.classList.add('hidden'));
+            document.getElementById(`workout-tab-${day.replace(/\s/g, '-')}`).classList.remove('hidden');
+        };
+
+        window.showWorkoutDetails = (dayId) => {
+            const details = document.getElementById(`workout-details-${dayId}`);
+            if (details) details.classList.toggle('hidden');
+        };
+
+        init();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
