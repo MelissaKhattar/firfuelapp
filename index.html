@@ -1129,32 +1129,36 @@
 
         window.switchMealDay = (day) => {
             activeTabIndex = day;
-            document.querySelectorAll('#meal-plan-content button').forEach(btn => {
-                if (btn.textContent.includes(day)) {
-                    btn.classList.add('bg-blue-600', 'text-white');
-                    btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                } else {
-                    btn.classList.remove('bg-blue-600', 'text-white');
-                    btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                }
-            });
-            document.querySelectorAll('[id^="meal-tab-"]').forEach(tab => tab.classList.add('hidden'));
-            document.getElementById(`meal-tab-${day}`).classList.remove('hidden');
+            const mealPlannerTabs = document.getElementById('meal-planner-tabs');
+            if (mealPlannerTabs) {
+                 document.querySelectorAll('#meal-planner-tabs button').forEach(btn => {
+                     if (btn.textContent.includes(day)) {
+                         btn.classList.add('bg-blue-600', 'text-white');
+                         btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                     } else {
+                         btn.classList.remove('bg-blue-600', 'text-white');
+                         btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                     }
+                 });
+            }
+            renderPage();
         };
 
         window.switchWorkoutDay = (day) => {
             activeTabIndex = day;
-            document.querySelectorAll('#workout-planner-content button').forEach(btn => {
-                if (btn.textContent.includes(day)) {
-                    btn.classList.add('bg-blue-600', 'text-white');
-                    btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                } else {
-                    btn.classList.remove('bg-blue-600', 'text-white');
-                    btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                }
-            });
-            document.querySelectorAll('[id^="workout-tab-"]').forEach(tab => tab.classList.add('hidden'));
-            document.getElementById(`workout-tab-${day.replace(/\s/g, '-')}`).classList.remove('hidden');
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
         };
 
         window.showWorkoutDetails = (dayId) => {
