@@ -442,7 +442,7 @@
             mainContent.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-[calc(100vh-180px)] text-center">
                     <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to FitFuel!</h2>
-                    <p class="text-gray-600 mb-6 max-w-md">
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
                         To get started, please create your first profile. This will allow the app to generate personalized meal and workout plans for you.
                     </p>
                     <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
@@ -1099,7 +1099,10 @@
                     const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     if (mealPlans.length > 0) {
                         mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') renderPage();
+                        if (currentPage === 'meal-planner') {
+                            renderPage();
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                        }
                     }
                 });
                 
