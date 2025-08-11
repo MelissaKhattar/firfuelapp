@@ -680,32 +680,41 @@
             const shoppingListMap = {};
 
             allIngredients.forEach(item => {
-                const name = item.trim().toLowerCase();
-                const category = classifyIngredient(name);
-                if (!shoppingListMap[category]) {
-                    shoppingListMap[category] = {};
+                const match = item.match(/^(\d+\.?\d*)\s*(g|kg|ml|l|tbsp|tsp|cup|cups)?\s*(.+)$/i);
+                let quantity = 1;
+                let unit = '';
+                let name = item;
+                if (match) {
+                    quantity = parseFloat(match[1]);
+                    unit = match[2] || '';
+                    name = match[3].trim();
                 }
-                if (shoppingListMap[category][name]) {
-                    shoppingListMap[category][name].quantity += 1;
+                const cleanedName = name.split(',')[0].trim(); // Simple cleaning for grouping
+                if (!shoppingListMap[cleanedName]) {
+                    shoppingListMap[cleanedName] = { name: cleanedName, quantity: quantity, unit: unit, purchased: false };
                 } else {
-                    shoppingListMap[category][name] = { name: item, quantity: 1, purchased: false };
+                    shoppingListMap[cleanedName].quantity += quantity;
                 }
             });
-
+            
             let organizedHtml = '';
-            for (const category in shoppingListMap) {
-                organizedHtml += `<div class="mb-4">`;
-                organizedHtml += `<h4 class="font-bold text-lg text-blue-600">${category}</h4>`;
-                const listItemsHtml = Object.values(shoppingListMap[category]).map(item => `
-                    <div class="flex items-center gap-4 py-2 border-b last:border-b-0">
-                        <input type="checkbox" id="item-${item.name.replace(/\s+/g, '-')}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${item.purchased ? 'checked' : ''} onchange="toggleShoppingItem('${item.name}')">
-                        <label for="item-${item.name.replace(/\s+/g, '-')}" class="flex-1 text-base ${item.purchased ? 'line-through text-gray-400' : ''}">
-                            <span class="font-medium">${item.name}</span>
-                        </label>
-                    </div>
-                `).join('');
-                organizedHtml += listItemsHtml;
-                organizedHtml += `</div>`;
+            for (const category in ingredientCategories) {
+                const categoryItems = Object.values(shoppingListMap).filter(item => classifyIngredient(item.name) === category);
+                if (categoryItems.length > 0) {
+                    organizedHtml += `<div class="mb-4">`;
+                    organizedHtml += `<h4 class="font-bold text-lg text-blue-600">${category}</h4>`;
+                    const listItemsHtml = categoryItems.map(item => `
+                        <div class="flex items-center gap-4 py-2 border-b last:border-b-0">
+                            <input type="checkbox" id="item-${item.name.replace(/\s+/g, '-')}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${item.purchased ? 'checked' : ''} onchange="toggleShoppingItem('${item.name}')">
+                            <label for="item-${item.name.replace(/\s+/g, '-')}" class="flex-1 text-base ${item.purchased ? 'line-through text-gray-400' : ''}">
+                                <span class="font-medium">${item.name}</span>
+                                <span class="ml-2 text-gray-500">${item.quantity}${item.unit}</span>
+                            </label>
+                        </div>
+                    `).join('');
+                    organizedHtml += listItemsHtml;
+                    organizedHtml += `</div>`;
+                }
             }
 
             return `
