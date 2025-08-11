@@ -188,7 +188,8 @@
             appId: "1:1011290290269:web:16e8dd81360ee4d57cf5b4"
         };
         
-        // This key is for the Gemini API call and will be provided at runtime.
+        // IMPORTANT: Insert your Gemini API key here. Get it from https://aistudio.google.com/app/apikey
+        // Example: const apiKey = "AIzaSyC2q1C2y4n3c2r2g2i2p3m3t3l3a3u3";
         const apiKey = "AIzaSyCb-h7DP6e6cbMvH4g9dt5IEL9Ddl5iMH4";
         
         // A simple UUID generator for unique IDs
@@ -199,10 +200,21 @@
             });
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const storage = getStorage(app);
+        let app, db, auth;
+        const initFirebase = () => {
+             // Only initialize if the firebase config is present
+            if (Object.values(firebaseConfig).every(val => val !== "")) {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                return true;
+            } else {
+                console.error("Firebase config is missing. Please add your config to the firebaseConfig object.");
+                showToast("Firebase config missing. Please add your config to the code.", 'error');
+                return false;
+            }
+        };
+
         const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.appId;
 
         let userId = null;
@@ -218,6 +230,9 @@
         // --- Gemini API Call Functions ---
 
         const callGeminiApi = async (prompt, responseSchema) => {
+            if (!apiKey) {
+                throw new Error("Gemini API key is not set. Please add your key to the code.");
+            }
             let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
             const payload = {
                 contents: chatHistory,
@@ -248,7 +263,9 @@
                     throw new Error("Failed to connect to Gemini API.");
                 }
             }
-
+            if (response.status === 403) {
+                 throw new Error("Gemini API request failed with a 403 Forbidden error. This often means the API key is invalid or has insufficient permissions.");
+            }
             if (!response || !response.ok) {
                 throw new Error("API request failed after multiple retries.");
             }
@@ -368,12 +385,30 @@
 
         // --- UI Rendering Functions ---
 
+        const renderHomePage = () => {
+            const mainContent = document.getElementById('main-content');
+            if (!mainContent) return;
+            mainContent.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-[calc(100vh-180px)] text-center">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to FitFuel!</h2>
+                    <p class="text-gray-600 mb-6 max-w-md">
+                        To get started, please create your first profile. This will allow the app to generate personalized meal and workout plans for you.
+                    </p>
+                    <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Create First Profile
+                    </button>
+                </div>
+            `;
+            lucide.createIcons();
+        };
+
         const renderPage = () => {
             const mainContent = document.getElementById('main-content');
             if (!mainContent) return;
             mainContent.innerHTML = '';
             
-            if (profiles.length === 0) {
+            if (!currentProfile) {
                 renderHomePage();
                 return;
             }
@@ -400,24 +435,6 @@
             }
             lucide.createIcons();
             addEventListeners();
-        };
-        
-        const renderHomePage = () => {
-            const mainContent = document.getElementById('main-content');
-            if (!mainContent) return;
-            mainContent.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-[calc(100vh-180px)] text-center">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to FitFuel!</h2>
-                    <p class="text-gray-600 mb-6 max-w-md">
-                        To get started, please create your first profile. This will allow the app to generate personalized meal and workout plans for you.
-                    </p>
-                    <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                        Create First Profile
-                    </button>
-                </div>
-            `;
-            lucide.createIcons();
         };
 
         const getHomePageHTML = () => {
@@ -870,11 +887,9 @@
             const groupPlanToggle = document.getElementById('group-plan-toggle');
             if (groupPlanToggle) groupPlanToggle.onchange = toggleGroupPlan;
         };
-
+        
         const init = async () => {
-            if (!firebaseConfig.apiKey) {
-                console.error("Firebase config is missing. Please add your config to the firebaseConfig object.");
-                showToast("Firebase config missing. Please add your config to the code.", 'error');
+            if (!initFirebase()) {
                 return;
             }
 
@@ -922,7 +937,6 @@
                     }
                 });
             });
-            addEventListeners();
         };
 
         window.openProfileModal = () => openModal('profile-modal');
@@ -974,8 +988,11 @@
             if (details) details.classList.toggle('hidden');
         };
 
-        init();
-        lucide.createIcons();
+        document.addEventListener('DOMContentLoaded', () => {
+             init();
+             lucide.createIcons();
+             addEventListeners();
+        });
     </script>
 </body>
 </html>
