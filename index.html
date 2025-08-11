@@ -603,7 +603,7 @@
                                         ${tabsHtml}
                                     </div>
                                 </div>
-                                <div class="mt-2">
+                                <div class="mt-2" id="meal-day-content">
                                     ${getMealDayContentHTML()}
                                 </div>
                             </div>
@@ -1141,7 +1141,11 @@
                      }
                  });
             }
-            renderPage();
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
         };
 
         window.switchWorkoutDay = (day) => {
