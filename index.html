@@ -13,6 +13,13 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex flex-col">
@@ -167,12 +174,11 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // IMPORTANT: Replace with your actual Firebase project configuration
-        // You can get this from your Firebase project settings page.
-        // All these values must be strings.
+        // IMPORTANT: Your actual Firebase project configuration
+        // This has been pre-filled with the values you provided.
         const firebaseConfig = {
             apiKey: "AIzaSyDgZqwg-G-9OzHl4cr-km1UbasU5dDDvbE",
             authDomain: "fuelfit-meli.firebaseapp.com",
@@ -181,12 +187,23 @@
             messagingSenderId: "1011290290269",
             appId: "1:1011290290269:web:16e8dd81360ee4d57cf5b4"
         };
+        
+        // This key is for the Gemini API call and will be provided at runtime.
+        const apiKey = "";
+        
+        // A simple UUID generator for unique IDs
+        const generateUUID = () => {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         const storage = getStorage(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.appId;
 
         let userId = null;
         let profiles = [];
@@ -198,48 +215,168 @@
         let isLoading = false;
         let activeTabIndex = 'Monday';
 
-        // --- Mock API Responses (for demonstration) ---
-        const mockMealPlan = {
-            "weeklyPlan": [
-                { "day": "Monday", "meals": [{ "name": "Breakfast", "description": "Oatmeal with berries and almonds.", "calories": 350 }, { "name": "Lunch", "description": "Grilled chicken salad.", "calories": 450 }, { "name": "Dinner", "description": "Baked salmon with roasted asparagus.", "calories": 500 }] },
-                { "day": "Tuesday", "meals": [{ "name": "Breakfast", "description": "Scrambled eggs with spinach.", "calories": 380 }, { "name": "Lunch", "description": "Leftover salmon.", "calories": 500 }, { "name": "Dinner", "description": "Turkey meatballs with zucchini noodles.", "calories": 480 }] },
-                { "day": "Wednesday", "meals": [{ "name": "Breakfast", "description": "Greek yogurt with granola.", "calories": 300 }, { "name": "Lunch", "description": "Turkey meatballs with zucchini noodles.", "calories": 480 }, { "name": "Dinner", "description": "Lentil soup.", "calories": 450 }] },
-                { "day": "Thursday", "meals": [{ "name": "Breakfast", "description": "Protein smoothie.", "calories": 350 }, { "name": "Lunch", "description": "Lentil soup.", "calories": 450 }, { "name": "Dinner", "description": "Chicken stir-fry.", "calories": 520 }] },
-                { "day": "Friday", "meals": [{ "name": "Breakfast", "description": "Oatmeal with berries.", "calories": 350 }, { "name": "Lunch", "description": "Chicken stir-fry.", "calories": 520 }, { "name": "Dinner", "description": "Homemade veggie pizza.", "calories": 600 }] },
-                { "day": "Saturday", "meals": [{ "name": "Breakfast", "description": "Scrambled eggs with spinach.", "calories": 380 }, { "name": "Lunch", "description": "Homemade pizza leftovers.", "calories": 600 }, { "name": "Dinner", "description": "Lean beef burgers.", "calories": 650 }] },
-                { "day": "Sunday", "meals": [{ "name": "Breakfast", "description": "Protein smoothie.", "calories": 350 }, { "name": "Lunch", "description": "Lean beef burgers.", "calories": 650 }, { "name": "Dinner", "description": "Roasted chicken.", "calories": 580 }] }
-            ]
+        // --- Gemini API Call Functions ---
+
+        const callGeminiApi = async (prompt, responseSchema) => {
+            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: responseSchema,
+                },
+            };
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            let response;
+            let retries = 0;
+            const maxRetries = 5;
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            while (retries < maxRetries) {
+                try {
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.status !== 429) break; // Not a rate limit error, so break.
+                    retries++;
+                    await delay(Math.pow(2, retries) * 1000); // Exponential backoff
+                } catch (error) {
+                    console.error("Fetch failed:", error);
+                    throw new Error("Failed to connect to Gemini API.");
+                }
+            }
+
+            if (!response || !response.ok) {
+                throw new Error("API request failed after multiple retries.");
+            }
+
+            const result = await response.json();
+            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts) {
+                const jsonText = result.candidates[0].content.parts[0].text;
+                return JSON.parse(jsonText);
+            } else {
+                throw new Error("Unexpected API response structure.");
+            }
         };
 
-        const mockWorkoutPlan = {
-            "monthlyPlan": [
-                { "day": "Day 1", "focus": "Full Body Strength", "exercises": [{ "name": "Squats", "sets": 3, "reps": "8-10", "rest": "60s", "description": "Lower your hips as if sitting in a chair.", "video": "https://www.youtube.com/embed/videoseries" }] },
-                { "day": "Day 2", "focus": "Cardio & Core", "exercises": [{ "name": "Running", "sets": 1, "reps": "30 minutes", "rest": "n/a", "description": "Brisk jog or run.", "video": "https://www.youtube.com/embed/videoseries" }, { "name": "Plank", "sets": 3, "reps": "hold for 60s", "rest": "30s", "description": "Hold a plank position.", "video": "https://www.youtube.com/embed/videoseries" }] },
-                { "day": "Day 3", "focus": "Rest Day", "exercises": [] },
-                { "day": "Day 4", "focus": "Upper Body Strength", "exercises": [{ "name": "Overhead Press", "sets": 3, "reps": "8-10", "rest": "60s", "description": "Press a dumbbell or barbell overhead.", "video": "https://www.youtube.com/embed/videoseries" }] },
-                { "day": "Day 5", "focus": "Lower Body Strength", "exercises": [{ "name": "Lunges", "sets": 3, "reps": "10-12 per leg", "rest": "60s", "description": "Step forward with one leg and lower your hips.", "video": "https://www.youtube.com/embed/videoseries" }] },
-                { "day": "Day 6", "focus": "Active Recovery", "exercises": [{ "name": "Walking", "sets": 1, "reps": "45 minutes", "rest": "n/a", "description": "A light walk to keep the blood flowing.", "video": "https://www.youtube.com/embed/videoseries" }] },
-                { "day": "Day 7", "focus": "Rest Day", "exercises": [] }
-            ]
+        const generateMealPlan = async () => {
+            if (!currentProfile) {
+                showToast("Please select or create a profile first.", 'error');
+                return;
+            }
+            isLoading = true;
+            updateLoadingState('meal-plan');
+            try {
+                const prompt = `You are a professional nutritionist. Create a 7-day, 3-meal-per-day meal plan for the following user, formatted as JSON. The user's profile is: Name: ${currentProfile.name}, Age: ${currentProfile.age}, Gender: ${currentProfile.gender}, Weight: ${currentProfile.weight}kg, Height: ${currentProfile.height}cm, BMI: ${currentProfile.bmi}, Goal: ${currentProfile.fitnessGoal}, Dietary Preferences: ${currentProfile.dietaryPreferences}, Allergies: ${currentProfile.allergies}. The plan should be realistic and healthy.`;
+                
+                const responseSchema = {
+                    "type": "OBJECT",
+                    "properties": {
+                        "weeklyPlan": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "properties": {
+                                    "day": { "type": "STRING" },
+                                    "meals": {
+                                        "type": "ARRAY",
+                                        "items": {
+                                            "type": "OBJECT",
+                                            "properties": {
+                                                "name": { "type": "STRING" },
+                                                "description": { "type": "STRING" },
+                                                "calories": { "type": "NUMBER" }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const newPlanData = await callGeminiApi(prompt, responseSchema);
+                mealPlan = { ...newPlanData, id: generateUUID(), createdAt: new Date().toISOString(), profileId: currentProfile.id };
+                await saveMealPlanToHistory(mealPlan);
+                showToast("Meal plan generated successfully!");
+            } catch (error) {
+                console.error("Error generating meal plan:", error);
+                showToast("Failed to generate meal plan. Please try again.", 'error');
+            } finally {
+                isLoading = false;
+                updateLoadingState('meal-plan');
+                renderPage();
+            }
+        };
+
+        const generateWorkoutPlan = async () => {
+            if (!currentProfile) {
+                showToast("Please select or create a profile first.", 'error');
+                return;
+            }
+            isLoading = true;
+            updateLoadingState('workout-plan');
+            try {
+                const prompt = `You are a professional personal trainer. Create a 30-day workout plan for the following user, formatted as JSON. The user's profile is: Name: ${currentProfile.name}, Age: ${currentProfile.age}, Gender: ${currentProfile.gender}, Weight: ${currentProfile.weight}kg, Height: ${currentProfile.height}cm, BMI: ${currentProfile.bmi}, Goal: ${currentProfile.fitnessGoal}, Activity Level: ${currentProfile.activityLevel}. The plan should include a variety of exercises, sets, reps, rest times, and a brief description for each day. Include rest days.`;
+                
+                const responseSchema = {
+                    "type": "OBJECT",
+                    "properties": {
+                        "monthlyPlan": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "properties": {
+                                    "day": { "type": "STRING" },
+                                    "focus": { "type": "STRING" },
+                                    "exercises": {
+                                        "type": "ARRAY",
+                                        "items": {
+                                            "type": "OBJECT",
+                                            "properties": {
+                                                "name": { "type": "STRING" },
+                                                "sets": { "type": "NUMBER" },
+                                                "reps": { "type": "STRING" },
+                                                "rest": { "type": "STRING" },
+                                                "description": { "type": "STRING" },
+                                                "video": { "type": "STRING" }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const newPlanData = await callGeminiApi(prompt, responseSchema);
+                workoutPlan = { ...newPlanData, id: generateUUID(), createdAt: new Date().toISOString(), profileId: currentProfile.id, completedWorkouts: [] };
+                await saveWorkoutPlanToHistory(workoutPlan);
+                showToast("Workout plan generated successfully!");
+            } catch (error) {
+                console.error("Error generating workout plan:", error);
+                showToast("Failed to generate workout plan. Please try again.", 'error');
+            } finally {
+                isLoading = false;
+                updateLoadingState('workout-plan');
+                renderPage();
+            }
         };
 
         // --- UI Rendering Functions ---
 
-        /** Renders the main page content based on the current page state. */
         const renderPage = () => {
             const mainContent = document.getElementById('main-content');
             if (!mainContent) return;
-
-            // Clear previous content
             mainContent.innerHTML = '';
             
-            // Render a welcome page if no profiles exist
             if (profiles.length === 0) {
                 renderHomePage();
                 return;
             }
-
-            // Render active profile header
             mainContent.innerHTML += `
                 <div class="flex justify-between items-center mb-6 p-4 bg-white rounded-lg shadow-sm">
                     <h2 class="text-xl font-semibold text-gray-800">
@@ -255,21 +392,11 @@
                     </div>
                 </div>
             `;
-
-            // Render specific page content
             switch (currentPage) {
-                case 'home':
-                    mainContent.innerHTML += getHomePageHTML();
-                    break;
-                case 'meal-planner':
-                    mainContent.innerHTML += getMealPlannerHTML();
-                    break;
-                case 'workout-planner':
-                    mainContent.innerHTML += getWorkoutPlannerHTML();
-                    break;
-                case 'profiles':
-                    mainContent.innerHTML += getProfileManagerHTML();
-                    break;
+                case 'home': mainContent.innerHTML += getHomePageHTML(); break;
+                case 'meal-planner': mainContent.innerHTML += getMealPlannerHTML(); break;
+                case 'workout-planner': mainContent.innerHTML += getWorkoutPlannerHTML(); break;
+                case 'profiles': mainContent.innerHTML += getProfileManagerHTML(); break;
             }
             lucide.createIcons();
             addEventListeners();
@@ -292,8 +419,6 @@
             `;
             lucide.createIcons();
         };
-
-        // --- HTML String Generation Functions ---
 
         const getHomePageHTML = () => {
             return `
@@ -591,15 +716,18 @@
         /** Saves a profile to Firestore */
         const saveProfile = async (e) => {
             e.preventDefault();
-            if (!userId) return;
+            if (!userId) {
+                showToast("User not authenticated. Please try again.", 'error');
+                return;
+            }
 
             const profileData = {
                 id: document.getElementById('profile-id').value || null,
                 name: document.getElementById('name').value,
                 age: document.getElementById('age').value,
                 gender: document.getElementById('gender').value,
-                weight: document.getElementById('weight').value,
-                height: document.getElementById('height').value,
+                weight: parseFloat(document.getElementById('weight').value),
+                height: parseFloat(document.getElementById('height').value),
                 dietaryPreferences: document.getElementById('dietaryPreferences').value,
                 allergies: document.getElementById('allergies').value,
                 fitnessGoal: document.getElementById('fitnessGoal').value,
@@ -658,35 +786,7 @@
                 openModal('delete-modal');
             }
         };
-
-        /** Generates and saves a meal plan */
-        const generateMealPlan = async () => {
-            if (!currentProfile) {
-                showToast("Please select or create a profile first.", 'error');
-                return;
-            }
-            isLoading = true;
-            updateLoadingState('meal-plan');
-            try {
-                const newPlan = {
-                    ...mockMealPlan,
-                    createdAt: new Date(),
-                    profileId: currentProfile.id,
-                    profileName: currentProfile.name
-                };
-                mealPlan = newPlan;
-                await saveMealPlanToHistory(newPlan);
-                showToast("Meal plan generated successfully!");
-            } catch (error) {
-                console.error("Error generating meal plan:", error);
-                showToast("Failed to generate meal plan. Please try again.", 'error');
-            } finally {
-                isLoading = false;
-                updateLoadingState('meal-plan');
-                renderPage(); // Re-render to show the new plan
-            }
-        };
-
+        
         /** Saves a meal plan to history */
         const saveMealPlanToHistory = async (plan) => {
             if (!db || !userId || !plan) return;
@@ -695,35 +795,6 @@
                 await addDoc(plansRef, plan);
             } catch (error) {
                 console.error("Error saving meal plan to history:", error);
-            }
-        };
-
-        /** Generates and saves a workout plan */
-        const generateWorkoutPlan = async () => {
-            if (!currentProfile) {
-                showToast("Please select or create a profile first.", 'error');
-                return;
-            }
-            isLoading = true;
-            updateLoadingState('workout-plan');
-            try {
-                const newPlan = {
-                    ...mockWorkoutPlan,
-                    createdAt: new Date(),
-                    profileId: currentProfile.id,
-                    profileName: currentProfile.name,
-                    completedWorkouts: [],
-                };
-                workoutPlan = newPlan;
-                await saveWorkoutPlanToHistory(newPlan);
-                showToast("Workout plan generated successfully!");
-            } catch (error) {
-                console.error("Error generating workout plan:", error);
-                showToast("Failed to generate workout plan. Please try again.", 'error');
-            } finally {
-                isLoading = false;
-                updateLoadingState('workout-plan');
-                renderPage(); // Re-render to show the new plan
             }
         };
 
@@ -745,7 +816,6 @@
                 ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
                 : [...workoutPlan.completedWorkouts, dayIndex];
             workoutPlan.completedWorkouts = newCompletedWorkouts;
-            // Update in Firestore
             if (workoutPlan.id) {
                 const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
                 await updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
@@ -763,7 +833,7 @@
 
         /** Updates the loading state of buttons */
         const updateLoadingState = (planType) => {
-            const button = document.getElementById(`${planType}-btn`);
+            const button = document.getElementById(`generate-${planType}-btn`);
             const icon = document.getElementById(`${planType}-icon`);
             const loadingIcon = document.getElementById(`${planType}-loading-icon`);
 
@@ -780,10 +850,9 @@
 
         /** Event listeners for dynamic content */
         const addEventListeners = () => {
-            // Main navigation
             document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
             document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
             document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
 
             const profileForm = document.getElementById('profile-form');
@@ -802,14 +871,8 @@
             if (groupPlanToggle) groupPlanToggle.onchange = toggleGroupPlan;
         };
 
-        /** Initialize the app */
         const init = async () => {
-            // The Firebase init has to be inside a check that firebaseConfig is not all empty.
-            if (firebaseConfig.apiKey) {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-            } else {
+            if (!firebaseConfig.apiKey) {
                 console.error("Firebase config is missing. Please add your config to the firebaseConfig object.");
                 showToast("Firebase config missing. Please add your config to the code.", 'error');
                 return;
@@ -818,19 +881,21 @@
             onAuthStateChanged(auth, async (user) => {
                 if (!user) {
                     try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
                         } else {
                             await signInAnonymously(auth);
                         }
                     } catch (error) {
                         console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
                     }
                 }
-                userId = auth.currentUser?.uid || crypto.randomUUID();
+                userId = auth.currentUser?.uid || 'anonymous-user';
                 document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
                 
-                // Set up real-time listeners after authentication
                 onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
                     profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
                     if (!currentProfile && profiles.length > 0) {
@@ -842,28 +907,24 @@
                 });
                 
                 onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     if (mealPlans.length > 0) {
                         mealPlan = mealPlans[0];
-                        // If we are on the meal planner page, re-render to show the latest plan.
                         if (currentPage === 'meal-planner') renderPage();
                     }
                 });
                 
                 onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     if (workoutPlans.length > 0) {
                         workoutPlan = workoutPlans[0];
-                        // If we are on the workout planner page, re-render to show the latest plan.
                         if (currentPage === 'workout-planner') renderPage();
                     }
                 });
             });
-
             addEventListeners();
         };
 
-        // Global functions for inline event handlers
         window.openProfileModal = () => openModal('profile-modal');
         window.editProfile = (profileId) => {
             const profile = profiles.find(p => p.id === profileId);
