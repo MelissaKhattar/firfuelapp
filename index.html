@@ -768,13 +768,13 @@
             const loadingIcon = document.getElementById(`${planType}-loading-icon`);
 
             if (isLoading) {
-                button.disabled = true;
-                icon.classList.add('hidden');
-                loadingIcon.classList.remove('hidden');
+                if (button) button.disabled = true;
+                if (icon) icon.classList.add('hidden');
+                if (loadingIcon) loadingIcon.classList.remove('hidden');
             } else {
-                button.disabled = false;
-                icon.classList.remove('hidden');
-                loadingIcon.classList.add('hidden');
+                if (button) button.disabled = false;
+                if (icon) icon.classList.remove('hidden');
+                if (loadingIcon) loadingIcon.classList.add('hidden');
             }
         };
 
@@ -804,6 +804,17 @@
 
         /** Initialize the app */
         const init = async () => {
+            // The Firebase init has to be inside a check that firebaseConfig is not all empty.
+            if (firebaseConfig.apiKey) {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+            } else {
+                console.error("Firebase config is missing. Please add your config to the firebaseConfig object.");
+                showToast("Firebase config missing. Please add your config to the code.", 'error');
+                return;
+            }
+
             onAuthStateChanged(auth, async (user) => {
                 if (!user) {
                     try {
@@ -869,10 +880,13 @@
 
         window.switchMealDay = (day) => {
             activeTabIndex = day;
-            document.querySelectorAll('#meal-plan-content button').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
             document.querySelectorAll('#meal-plan-content button').forEach(btn => {
                 if (btn.textContent.includes(day)) {
                     btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('text-gray-500', 'hover:bg-gray-200');
                 }
             });
             document.querySelectorAll('[id^="meal-tab-"]').forEach(tab => tab.classList.add('hidden'));
@@ -881,10 +895,13 @@
 
         window.switchWorkoutDay = (day) => {
             activeTabIndex = day;
-            document.querySelectorAll('#workout-planner-content button').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
             document.querySelectorAll('#workout-planner-content button').forEach(btn => {
                 if (btn.textContent.includes(day)) {
                     btn.classList.add('bg-blue-600', 'text-white');
+                    btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('text-gray-500', 'hover:bg-gray-200');
                 }
             });
             document.querySelectorAll('[id^="workout-tab-"]').forEach(tab => tab.classList.add('hidden'));
