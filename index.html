@@ -229,10 +229,8 @@
         };
         
         // IMPORTANT: Insert your Gemini API key here. Get it from https://aistudio.google.com/app/apikey
-        // Example: const apiKey = "AIzaSyC2q1C2y4n3c2r2g2i2p3m3t3l3a3u3";
         const apiKey = "AIzaSyCb-h7DP6e6cbMvH4g9dt5IEL9Ddl5iMH4";
         
-        // A simple UUID generator for unique IDs
         const generateUUID = () => {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -242,7 +240,6 @@
 
         let app, db, auth;
         const initFirebase = () => {
-             // Only initialize if the firebase config is present
             if (Object.values(firebaseConfig).every(val => val !== "")) {
                 app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
@@ -265,10 +262,8 @@
         let currentEditingProfile = null;
         let currentPage = 'home';
         let isLoading = false;
-        let activeTabIndex = 'Monday';
         let showShoppingList = false;
-
-        // --- Gemini API Call Functions ---
+        let shoppingList = [];
 
         const callGeminiApi = async (prompt, responseSchema) => {
             if (!apiKey) {
@@ -296,9 +291,9 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    if (response.status !== 429) break; // Not a rate limit error, so break.
+                    if (response.status !== 429) break;
                     retries++;
-                    await delay(Math.pow(2, retries) * 1000); // Exponential backoff
+                    await delay(Math.pow(2, retries) * 1000);
                 } catch (error) {
                     console.error("Fetch failed:", error);
                     throw new Error("Failed to connect to Gemini API.");
@@ -327,20 +322,19 @@
             }
             isLoading = true;
             updateLoadingState('meal-plan');
+            const generatingMessage = "Generating plan, one moment please...";
+            showToast(generatingMessage, 'success');
+            
             try {
                 const selectedProfiles = profiles.filter(p => selectedProfileIds.includes(p.id));
                 let prompt;
-                let calories;
 
                 if (selectedProfiles.length > 1) {
-                    const groupInfo = selectedProfiles.map(p => `Name: ${p.name}, Age: ${p.age}, Gender: ${p.gender}, Weight: ${p.weight}kg, Height: ${p.height}cm, Goal: ${p.fitnessGoal}`).join('; ');
-                    prompt = `You are a professional nutritionist. Create a 7-day meal plan for a group with the following members, formatted as JSON: ${groupInfo}. The plan should be tailored to their combined needs and scale ingredients based on the number of people. Include individual portion sizes for each person. The plan should be realistic and healthy.`;
-                    // Simple mock for group calories
-                    calories = selectedProfiles.reduce((sum, p) => sum + 2000, 0); 
+                    const groupInfo = selectedProfiles.map(p => `Name: ${p.name}, Age: ${p.age}, Gender: ${p.gender}, Weight: ${p.weight}kg, Height: ${p.height}cm, Goal: ${p.fitnessGoal}, Dietary Preferences: ${p.dietaryPreferences}, Allergies: ${p.allergies}`).join('; ');
+                    prompt = `You are a professional nutritionist. Create a 7-day meal plan for a group with the following members, formatted as JSON. The group's profile information: ${groupInfo}. The plan should specify a dish name, total ingredients with measurements, and then individual portion sizes for each person. The plan should be realistic and healthy.`;
                 } else {
                     const profile = selectedProfiles[0];
-                    prompt = `You are a professional nutritionist. Create a 7-day, 3-meal-per-day meal plan for the following user, formatted as JSON. The user's profile is: Name: ${profile.name}, Age: ${profile.age}, Gender: ${profile.gender}, Weight: ${profile.weight}kg, Height: ${profile.height}cm, BMI: ${profile.bmi}, Goal: ${profile.fitnessGoal}, Dietary Preferences: ${profile.dietaryPreferences}, Allergies: ${profile.allergies}. The plan should be realistic and healthy.`;
-                    calories = 2000;
+                    prompt = `You are a professional nutritionist. Create a 7-day, 3-meal-per-day meal plan for the following user, formatted as JSON. The user's profile is: Name: ${profile.name}, Age: ${profile.age}, Gender: ${profile.gender}, Weight: ${profile.weight}kg, Height: ${profile.height}cm, BMI: ${profile.bmi}, Goal: ${profile.fitnessGoal}, Dietary Preferences: ${profile.dietaryPreferences}, Allergies: ${profile.allergies}. The plan should specify a dish name, ingredients with measurements, and individual portion sizes. The plan should be realistic and healthy.`;
                 }
 
                 const responseSchema = {
@@ -359,8 +353,8 @@
                                             "properties": {
                                                 "name": { "type": "STRING" },
                                                 "description": { "type": "STRING" },
-                                                "calories": { "type": "NUMBER" },
-                                                "ingredients": { "type": "ARRAY", "items": { "type": "STRING" } }
+                                                "ingredients": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                                "portionSizes": { "type": "STRING" }
                                             }
                                         }
                                     }
@@ -392,8 +386,11 @@
             }
             isLoading = true;
             updateLoadingState('workout-plan');
+            const generatingMessage = "Generating plan, one moment please...";
+            showToast(generatingMessage, 'success');
+
             try {
-                const prompt = `You are a professional personal trainer. Create a 30-day workout plan for the following user, formatted as JSON. The user's profile is: Name: ${currentProfile.name}, Age: ${currentProfile.age}, Gender: ${currentProfile.gender}, Weight: ${currentProfile.weight}kg, Height: ${currentProfile.height}cm, BMI: ${currentProfile.bmi}, Goal: ${currentProfile.fitnessGoal}, Activity Level: ${currentProfile.activityLevel}. The plan should include a variety of exercises, sets, reps, rest times, and a brief description for each day. Include rest days. The plan should be for a calendar month.`;
+                const prompt = `You are a professional personal trainer. Create a 30-day workout plan for the following user, formatted as JSON. The user's profile is: Name: ${currentProfile.name}, Age: ${currentProfile.age}, Gender: ${currentProfile.gender}, Weight: ${currentProfile.weight}kg, Height: ${currentProfile.height}cm, BMI: ${currentProfile.bmi}, Goal: ${currentProfile.fitnessGoal}, Activity Level: ${currentProfile.activityLevel}. The plan should be for a calendar month. Include a variety of exercises, sets, reps, rest times, and a brief description for each day. Only include rest days where no exercises are provided.`;
                 
                 const responseSchema = {
                     "type": "OBJECT",
@@ -438,7 +435,6 @@
             }
         };
 
-        // --- UI Rendering Functions ---
         const renderHomePage = () => {
             const mainContent = document.getElementById('main-content');
             if (!mainContent) return;
@@ -585,7 +581,10 @@
                                 <div class="flex-1">
                                     <h4 class="font-semibold text-lg">${meal.name}</h4>
                                     <p class="text-gray-600">${meal.description}</p>
-                                    <p class="text-sm text-gray-500">Approx. ${meal.calories} kcal</p>
+                                    <p class="text-sm text-gray-500">Portion: ${meal.portionSizes}</p>
+                                    <ul class="text-sm text-gray-500 space-y-1 mt-2">
+                                        ${(meal.ingredients || []).map(ingredient => `<li>- ${ingredient}</li>`).join('')}
+                                    </ul>
                                 </div>
                             </div>
                         `).join('')}
@@ -601,7 +600,11 @@
                     </div>
                     <div class="flex flex-col sm:flex-row gap-4 mb-6">
                         <button id="open-group-plan-modal-btn" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users mr-2 h-4 w-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            <span id="meal-plan-loading-icon" class="hidden animate-spin h-5 w-5 text-white mr-3">
+                                <svg class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"></svg>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users mr-2 h-4 w-4" id="meal-plan-icon"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                             Generate Group Plan
                         </button>
                         <button id="view-shopping-list-btn" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
@@ -680,7 +683,6 @@
             weekDays.forEach(day => calendarHtml += `<span>${day}</span>`);
             calendarHtml += '</div><div class="grid grid-cols-7 gap-1 mt-2">';
             
-            // Empty cells for the first week
             for (let i = 0; i < firstDayOfMonth; i++) {
                 calendarHtml += `<div class="p-2 text-center text-gray-300"></div>`;
             }
@@ -730,8 +732,6 @@
                 </div>
             `;
         };
-
-        // --- Data & Logic Functions ---
 
         const showToast = (message, type = 'success') => {
             const container = document.getElementById('toast-container');
@@ -872,15 +872,18 @@
             const button = document.getElementById(`generate-${planType}-btn`);
             const icon = document.getElementById(`${planType}-icon`);
             const loadingIcon = document.getElementById(`${planType}-loading-icon`);
+            const buttonText = document.getElementById(`${planType}-btn-text`);
 
             if (isLoading) {
                 if (button) button.disabled = true;
                 if (icon) icon.classList.add('hidden');
                 if (loadingIcon) loadingIcon.classList.remove('hidden');
+                if (buttonText) buttonText.textContent = "Generating plan...";
             } else {
                 if (button) button.disabled = false;
                 if (icon) icon.classList.remove('hidden');
                 if (loadingIcon) loadingIcon.classList.add('hidden');
+                if (buttonText) buttonText.textContent = `Generate ${planType === 'meal-plan' ? 'Meal Plan' : 'Workout Plan'}`;
             }
         };
 
@@ -895,9 +898,28 @@
         const generateAndRenderShoppingList = () => {
             const shoppingListContent = document.getElementById('shopping-list-content');
             if (shoppingListContent && mealPlan) {
-                const ingredients = mealPlan.weeklyPlan.flatMap(day => day.meals.flatMap(meal => meal.ingredients || []));
-                const uniqueIngredients = [...new Set(ingredients)];
-                const shoppingList = uniqueIngredients.map(item => ({ name: item, quantity: '1', purchased: false }));
+                const allIngredients = mealPlan.weeklyPlan.flatMap(day => day.meals.flatMap(meal => meal.ingredients || []));
+                const shoppingListMap = {};
+
+                allIngredients.forEach(item => {
+                    const match = item.match(/^(\d+\.?\d*)\s*(g|kg|ml|l|tbsp|tsp|cup|cups)?\s*(.+)$/i);
+                    let quantity = 1;
+                    let unit = '';
+                    let name = item;
+                    if (match) {
+                        quantity = parseFloat(match[1]);
+                        unit = match[2] || '';
+                        name = match[3].trim();
+                    }
+                    if (shoppingListMap[name]) {
+                        // For simplicity, we just add the quantities if units are the same
+                        shoppingListMap[name].quantity += quantity;
+                    } else {
+                        shoppingListMap[name] = { quantity: quantity, unit: unit, purchased: false };
+                    }
+                });
+
+                shoppingList = Object.entries(shoppingListMap).map(([name, data]) => ({ name, quantity: `${data.quantity} ${data.unit}`, purchased: data.purchased }));
                 shoppingListContent.innerHTML = getShoppingListHTML(shoppingList);
                 lucide.createIcons();
             } else if (shoppingListContent) {
@@ -906,16 +928,11 @@
         };
 
         window.toggleShoppingItem = (itemName) => {
-            const shoppingListContent = document.getElementById('shopping-list-content');
-            if (shoppingListContent) {
-                 const checkbox = document.getElementById(`item-${itemName}`);
-                 const label = document.querySelector(`label[for="item-${itemName}"]`);
-                 if (checkbox.checked) {
-                    label.classList.add('line-through', 'text-gray-400');
-                 } else {
-                    label.classList.remove('line-through', 'text-gray-400');
-                 }
-            }
+             const item = shoppingList.find(i => i.name === itemName);
+             if (item) {
+                 item.purchased = !item.purchased;
+             }
+             generateAndRenderShoppingList();
         }
         
         window.downloadShoppingList = () => {
@@ -1007,8 +1024,10 @@
             
             const isCompleted = newCompletedWorkouts.includes(dayIndex);
             const completionStatus = document.getElementById('workout-completion-status');
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
             
             renderPage();
         };
