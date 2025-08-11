@@ -265,6 +265,26 @@
         let activeTabIndex = 'Monday';
         let showShoppingList = false;
         let shoppingList = [];
+        let ingredientCategories = {
+            'Vegetables': ['spinach', 'broccoli', 'onions', 'garlic', 'tomatoes', 'carrots', 'sweet potatoes', 'bell peppers', 'lettuce', 'cucumber', 'zucchini', 'asparagus'],
+            'Fruits': ['apple', 'banana', 'orange', 'berries', 'avocado'],
+            'Proteins': ['chicken breast', 'salmon', 'eggs', 'turkey', 'lean beef', 'tofu', 'lentils'],
+            'Grains': ['brown rice', 'quinoa', 'oats', 'oatmeal', 'whole-wheat bread', 'pasta'],
+            'Dairy': ['greek yogurt', 'milk', 'cheese', 'parmesan'],
+            'Fats & Oils': ['olive oil', 'almonds', 'avocado', 'nuts', 'seeds'],
+            'Spices & Sauces': ['salt', 'pepper', 'oregano', 'basil', 'marinara sauce'],
+            'Other': []
+        };
+        
+        const classifyIngredient = (name) => {
+            const lowerName = name.toLowerCase();
+            for (const category in ingredientCategories) {
+                if (ingredientCategories[category].some(item => lowerName.includes(item))) {
+                    return category;
+                }
+            }
+            return 'Other';
+        };
 
         const callGeminiApi = async (prompt, responseSchema) => {
             if (!apiKey) {
@@ -568,20 +588,53 @@
         const getMealPlannerHTML = () => {
             const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
             
-            const tabsHtml = daysOfWeek.map(day => `
-                <button
-                    onclick="switchMealDay('${day}')"
-                    class="flex-1 px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeTabIndex === day ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}"
-                >${day}</button>
-            `).join('');
-
+            const mealPlanContent = mealPlan ? `
+                <div class="mt-6">
+                    <div class="flex items-center space-x-2">
+                        <button onclick="toggleView('meal-plan')" class="px-4 py-2 rounded-full text-sm font-medium ${!showShoppingList ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}">
+                            Meal Plan
+                        </button>
+                        <button onclick="toggleView('shopping-list')" class="px-4 py-2 rounded-full text-sm font-medium ${showShoppingList ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}">
+                            Shopping List
+                        </button>
+                    </div>
+                    <div id="meal-plan-view" class="mt-4 ${showShoppingList ? 'hidden' : ''}">
+                        <h3 class="text-lg font-semibold mb-2">Weekly Plan</h3>
+                        <div class="w-full mb-4">
+                            <label for="day-select" class="block text-sm font-medium text-gray-700 mb-2">Select a day:</label>
+                            <select id="day-select" onchange="switchMealDay(this.value)" class="w-full px-3 py-2 border rounded-md">
+                                ${daysOfWeek.map(day => `<option value="${day}" ${activeTabIndex === day ? 'selected' : ''}>${day}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div id="meal-day-content">
+                            ${getMealDayContentHTML()}
+                        </div>
+                    </div>
+                    <div id="shopping-list-view" class="mt-4 ${showShoppingList ? '' : 'hidden'}">
+                        <h3 class="text-xl font-bold mb-4">Shopping List</h3>
+                        <div class="flex gap-2 mb-4">
+                            <button onclick="downloadShoppingList()" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download h-4 w-4 mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                                Download
+                            </button>
+                            <button onclick="shareShoppingList()" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2 h-4 w-4 mr-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+                                Share
+                            </button>
+                        </div>
+                        <div id="shopping-list-content">
+                            ${getShoppingListHTML()}
+                        </div>
+                    </div>
+                </div>
+            ` : `<p class="text-center text-gray-500">Generate a meal plan to see it here.</p>`}
+            
             return `
                 <div class="bg-white rounded-xl shadow-lg p-6">
                     <div class="mb-4">
                         <h3 class="text-2xl font-bold">Meal Planner</h3>
                         <p class="text-sm text-gray-500">Generate and manage personalized weekly meal plans.</p>
                     </div>
-
                     <div class="flex flex-col sm:flex-row gap-4 mb-6">
                         <button id="open-group-plan-modal-btn" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
                             <span id="meal-plan-loading-icon" class="hidden animate-spin h-5 w-5 text-white mr-3">
@@ -592,26 +645,7 @@
                             Generate Group Plan
                         </button>
                     </div>
-
-                    ${mealPlan ? `
-                        <div class="mt-6">
-                            <h3 class="text-lg font-semibold mb-2">Weekly Plan</h3>
-                            <div class="w-full mb-4">
-                                <label for="day-select" class="block text-sm font-medium text-gray-700 mb-2">Select a day:</label>
-                                <select id="day-select" onchange="switchMealDay(this.value)" class="w-full px-3 py-2 border rounded-md">
-                                    ${daysOfWeek.map(day => `<option value="${day}" ${activeTabIndex === day ? 'selected' : ''}>${day}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div id="meal-day-content">
-                                ${getMealDayContentHTML()}
-                            </div>
-                            <hr class="my-6">
-                            <h3 class="text-xl font-bold mb-4">Shopping List</h3>
-                            <div id="shopping-list-content">
-                                ${getShoppingListHTML()}
-                            </div>
-                        </div>
-                    ` : `<p class="text-center text-gray-500">Generate a meal plan to see it here.</p>`}
+                    ${mealPlanContent}
                 </div>
             `;
         };
@@ -647,21 +681,32 @@
 
             allIngredients.forEach(item => {
                 const name = item.trim().toLowerCase();
-                if (shoppingListMap[name]) {
-                    shoppingListMap[name].quantity += 1; // Simple count for now
+                const category = classifyIngredient(name);
+                if (!shoppingListMap[category]) {
+                    shoppingListMap[category] = {};
+                }
+                if (shoppingListMap[category][name]) {
+                    shoppingListMap[category][name].quantity += 1;
                 } else {
-                    shoppingListMap[name] = { name: item, quantity: 1, purchased: false };
+                    shoppingListMap[category][name] = { name: item, quantity: 1, purchased: false };
                 }
             });
-            
-            const listItemsHtml = Object.values(shoppingListMap).map(item => `
-                <div class="flex items-center gap-4 py-2 border-b last:border-b-0">
-                    <input type="checkbox" id="item-${item.name.replace(/\s+/g, '-')}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${item.purchased ? 'checked' : ''} onchange="toggleShoppingItem('${item.name}')">
-                    <label for="item-${item.name.replace(/\s+/g, '-')}" class="flex-1 text-base ${item.purchased ? 'line-through text-gray-400' : ''}">
-                        <span class="font-medium">${item.name}</span>
-                    </label>
-                </div>
-            `).join('');
+
+            let organizedHtml = '';
+            for (const category in shoppingListMap) {
+                organizedHtml += `<div class="mb-4">`;
+                organizedHtml += `<h4 class="font-bold text-lg text-blue-600">${category}</h4>`;
+                const listItemsHtml = Object.values(shoppingListMap[category]).map(item => `
+                    <div class="flex items-center gap-4 py-2 border-b last:border-b-0">
+                        <input type="checkbox" id="item-${item.name.replace(/\s+/g, '-')}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${item.purchased ? 'checked' : ''} onchange="toggleShoppingItem('${item.name}')">
+                        <label for="item-${item.name.replace(/\s+/g, '-')}" class="flex-1 text-base ${item.purchased ? 'line-through text-gray-400' : ''}">
+                            <span class="font-medium">${item.name}</span>
+                        </label>
+                    </div>
+                `).join('');
+                organizedHtml += listItemsHtml;
+                organizedHtml += `</div>`;
+            }
 
             return `
                 <div class="flex gap-2 mb-4">
@@ -675,7 +720,7 @@
                     </button>
                 </div>
                 <div class="overflow-y-auto h-[400px] rounded-md border p-4">
-                    ${listItemsHtml}
+                    ${organizedHtml}
                 </div>
             `;
         }
@@ -1065,9 +1110,6 @@
 
             const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
             if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-
-            const viewShoppingListBtn = document.getElementById('view-shopping-list-btn');
-            if (viewShoppingListBtn) viewShoppingListBtn.onclick = toggleShoppingList;
         };
         
         const init = async () => {
