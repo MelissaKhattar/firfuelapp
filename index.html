@@ -462,7 +462,7 @@
             mainContent.innerHTML = `
                 <div class="flex flex-col items-center justify-center h-[calc(100vh-180px)] text-center">
                     <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to FitFuel!</h2>
-                    <p class="text-gray-600 mb-6 max-w-md">
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
                         To get started, please create your first profile. This will allow the app to generate personalized meal and workout plans for you.
                     </p>
                     <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
@@ -951,13 +951,13 @@
             }
         };
 
-        window.toggleShoppingList = () => {
-            showShoppingList = !showShoppingList;
+        window.toggleView = (view) => {
+            showShoppingList = view === 'shopping-list';
             if (showShoppingList) {
-                generateAndRenderShoppingList();
+                 generateAndRenderShoppingList();
             }
             renderPage();
-        }
+        };
 
         const generateAndRenderShoppingList = () => {
             const shoppingListContent = document.getElementById('shopping-list-content');
@@ -975,16 +975,16 @@
                         unit = match[2] || '';
                         name = match[3].trim();
                     }
-                    if (shoppingListMap[name]) {
-                        // For simplicity, we just add the quantities if units are the same
-                        shoppingListMap[name].quantity += quantity;
+                    const cleanedName = name.split(',')[0].trim();
+                    if (!shoppingListMap[cleanedName]) {
+                        shoppingListMap[cleanedName] = { name: cleanedName, quantity: quantity, unit: unit, purchased: false };
                     } else {
-                        shoppingListMap[name] = { quantity: quantity, unit: unit, purchased: false };
+                        shoppingListMap[cleanedName].quantity += quantity;
                     }
                 });
 
-                shoppingList = Object.entries(shoppingListMap).map(([name, data]) => ({ name, quantity: `${data.quantity} ${data.unit}`, purchased: data.purchased }));
-                shoppingListContent.innerHTML = getShoppingListHTML(shoppingList);
+                shoppingList = Object.entries(shoppingListMap).map(([name, data]) => ({ name: data.name, quantity: `${data.quantity}${data.unit}`, purchased: data.purchased }));
+                shoppingListContent.innerHTML = getShoppingListHTML();
                 lucide.createIcons();
             } else if (shoppingListContent) {
                 shoppingListContent.innerHTML = getShoppingListHTML([]);
@@ -996,16 +996,18 @@
              if (item) {
                  item.purchased = !item.purchased;
              }
-             generateAndRenderShoppingList();
+             const shoppingListContent = document.getElementById('shopping-list-content');
+             if (shoppingListContent) {
+                 shoppingListContent.innerHTML = getShoppingListHTML();
+                 lucide.createIcons();
+             }
         }
         
         window.downloadShoppingList = () => {
-            // Placeholder for PDF generation
             showToast("Download functionality is not implemented yet.", 'error');
         };
 
         window.shareShoppingList = () => {
-            // Placeholder for share functionality
             showToast("Share functionality is not implemented yet.", 'error');
         };
 
@@ -1191,18 +1193,6 @@
 
         window.switchMealDay = (day) => {
             activeTabIndex = day;
-            const mealPlannerTabs = document.getElementById('meal-planner-tabs');
-            if (mealPlannerTabs) {
-                 document.querySelectorAll('#meal-planner-tabs button').forEach(btn => {
-                     if (btn.textContent.includes(day)) {
-                         btn.classList.add('bg-blue-600', 'text-white');
-                         btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                     } else {
-                         btn.classList.remove('bg-blue-600', 'text-white');
-                         btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                     }
-                 });
-            }
             const mealDayContent = document.getElementById('meal-day-content');
             if (mealDayContent) {
                 mealDayContent.innerHTML = getMealDayContentHTML();
