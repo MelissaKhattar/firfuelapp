@@ -597,23 +597,6 @@
                     </div>
                 ` : `<p class="text-center text-gray-500 mt-2">No meals for this day.</p>`;
 
-                const shoppingListHTML = `
-                    <h3 class="text-xl font-bold mb-4">Shopping List</h3>
-                    <div class="flex gap-2 mb-4">
-                        <button onclick="downloadShoppingList()" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download h-4 w-4 mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                            Download
-                        </button>
-                        <button onclick="shareShoppingList()" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2 h-4 w-4 mr-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-                            Share
-                        </button>
-                    </div>
-                    <div id="shopping-list-content">
-                        ${getShoppingListHTML()}
-                    </div>
-                `;
-
                 mealPlanContent = `
                     <div class="mt-6">
                         <div class="flex items-center space-x-2">
@@ -637,7 +620,7 @@
                             </div>
                         </div>
                         <div id="shopping-list-view" class="mt-4 ${showShoppingList ? '' : 'hidden'}">
-                            ${shoppingListHTML}
+                            ${getShoppingListHTML()}
                         </div>
                     </div>
                 `;
