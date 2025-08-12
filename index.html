@@ -229,7 +229,7 @@
         };
         
         // IMPORTANT: Insert your Gemini API key here. Get it from https://aistudio.google.com/app/apikey
-        const apiKey = "AIzaSyCb-h7DP6e6cbMvH4g9dt5IEL9Ddl5iMH4";
+        const apiKey = "";
         
         const generateUUID = () => {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -971,6 +971,11 @@
         };
 
         const generateAndRenderShoppingList = () => {
+            if (!mealPlan) {
+                shoppingList = [];
+                return;
+            }
+
             const allIngredients = mealPlan.weeklyPlan.flatMap(day => day.meals.flatMap(meal => meal.ingredients || []));
             const shoppingListMap = {};
 
@@ -1005,7 +1010,7 @@
             
             shoppingList = Object.values(shoppingListMap).map(item => ({ 
                 ...item,
-                displayQuantity: item.unit ? `${item.quantity}${item.unit}` : item.quantity > 1 ? `x${item.quantity}` : ''
+                displayQuantity: item.unit ? `${item.quantity} ${item.unit}` : item.quantity > 1 ? `x${item.quantity}` : ''
             }));
         };
 
@@ -1050,6 +1055,1280 @@
         };
 
         window.showWorkoutDetailsForDay = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
+            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
+                showToast("No workout plan for this day.", 'error');
+                return;
+            }
+
+            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
+            const modalTitle = document.getElementById('workout-details-modal-title');
+            const modalContent = document.getElementById('workout-details-modal-content');
+            const completionToggle = document.getElementById('mark-workout-complete-toggle');
+            const completionStatus = document.getElementById('workout-completion-status');
+
+            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
+            if (dayPlan.exercises.length > 0) {
+                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
+                        <p class="text-gray-600 mb-2">${exercise.description}</p>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li>Sets: ${exercise.sets}</li>
+                            <li>Reps: ${exercise.reps}</li>
+                            <li>Rest: ${exercise.rest}</li>
+                        </ul>
+                    </div>
+                `).join('');
+            } else {
+                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+            }
+
+            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
+            completionToggle.checked = isCompleted;
+            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+
+            completionToggle.onchange = () => {
+                toggleWorkoutCompletion(dayIndex);
+            };
+
+            openModal('workout-details-modal');
+        };
+
+        window.toggleWorkoutCompletion = (dayIndex) => {
+            if (!workoutPlan) return;
+            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
+                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
+                : [...workoutPlan.completedWorkouts, dayIndex];
+            workoutPlan.completedWorkouts = newCompletedWorkouts;
+            
+            if (workoutPlan.id) {
+                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
+                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
+            }
+            
+            const isCompleted = newCompletedWorkouts.includes(dayIndex);
+            const completionStatus = document.getElementById('workout-completion-status');
+            if (completionStatus) {
+                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
+                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
+            }
+            
+            renderPage();
+        };
+
+        const addEventListeners = () => {
+            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
+            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
+            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
+            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
+
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) profileForm.onsubmit = saveProfile;
+
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
+
+            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
+            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
+
+            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
+            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
+            
+            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
+            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
+
+            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
+            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
+        };
+        
+        const init = async () => {
+            if (!initFirebase()) {
+                return;
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (!user) {
+                    try {
+                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                        if (token) {
+                            await signInWithCustomToken(auth, token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    } catch (error) {
+                        console.error("Firebase Auth Error:", error);
+                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
+                        return;
+                    }
+                }
+                userId = auth.currentUser?.uid || 'anonymous-user';
+                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
+                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+                    if (!currentProfile && profiles.length > 0) {
+                        currentProfile = profiles[0];
+                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
+                        currentProfile = profiles[0] || null;
+                    }
+                    renderPage();
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
+                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (mealPlans.length > 0) {
+                        mealPlan = mealPlans[0];
+                        if (currentPage === 'meal-planner') {
+                            activeTabIndex = mealPlan.weeklyPlan[0].day;
+                            renderPage();
+                        }
+                    }
+                });
+                
+                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
+                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    if (workoutPlans.length > 0) {
+                        workoutPlan = workoutPlans[0];
+                        if (currentPage === 'workout-planner') renderPage();
+                    }
+                });
+            });
+        };
+
+        window.openProfileModal = () => openModal('profile-modal');
+        window.editProfile = (profileId) => {
+            const profile = profiles.find(p => p.id === profileId);
+            if (profile) openModal('profile-modal', profile);
+        };
+        window.switchProfile = (profileId) => {
+            currentProfile = profiles.find(p => p.id === profileId);
+            if (currentProfile) {
+                showToast(`Active profile switched to ${currentProfile.name}.`);
+                renderPage();
+            }
+        };
+        window.closeModal = (id) => closeModal(id);
+
+        window.switchMealDay = (day) => {
+            activeTabIndex = day;
+            const mealDayContent = document.getElementById('meal-day-content');
+            if (mealDayContent) {
+                mealDayContent.innerHTML = getMealDayContentHTML();
+                lucide.createIcons();
+            }
+        };
+
+        window.switchWorkoutDay = (day) => {
+            activeTabIndex = day;
+            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
+            if (workoutPlannerTabs) {
+                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
+                    if (btn.textContent.includes(day)) {
+                        btn.classList.add('bg-blue-600', 'text-white');
+                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
+                    }
+                });
+            }
+            renderPage();
+        };
+
+        window.showWorkoutDetails = (dayIndex) => {
             if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
                 showToast("No workout plan for this day.", 'error');
                 return;
