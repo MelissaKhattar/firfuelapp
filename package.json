@@ -1,0 +1,15 @@
+{
+  "name": "fitfuel-meli",
+  "version": "1.0.0",
+  "description": "A fitness and nutrition planner app.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
