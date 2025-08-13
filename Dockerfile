@@ -1,16 +1,20 @@
-# Use a lightweight NGINX image to serve the HTML file.
-# NGINX is an excellent web server for serving static files.
-FROM nginx:alpine
+# Use a Node.js image as the base for the container
+FROM node:20-slim
 
-# Copy your HTML file and any other static assets (like CSS, JS)
-# from your local directory to the NGINX web server directory.
-# This assumes your main HTML file is named 'index.html'
-COPY . /usr/share/nginx/html
+# Set the working directory inside the container
+WORKDIR /app
 
-# Expose port 80 to the outside world, which is the default port for NGINX.
-EXPOSE 80
+# Copy the package.json and package-lock.json files to the container
+COPY package*.json ./
 
-# The NGINX server will automatically start when the container runs.
-# This is the default CMD for the nginx:alpine image, so it's not
-# strictly necessary to add it, but it's good practice to be explicit.
-CMD ["nginx", "-g", "daemon off;"]
+# Install the dependencies
+RUN npm install
+
+# Copy all other project files to the container
+COPY . .
+
+# Expose the port that the server will listen on
+EXPOSE 8080
+
+# The command to start the server when the container is run
+CMD ["npm", "start"]
