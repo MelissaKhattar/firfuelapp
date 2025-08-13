@@ -3,2379 +3,1008 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FitFuel App</title>
-    <!-- Tailwind CSS from CDN for styling -->
+    <title>FitFuel Meli</title>
+    <!-- Google Font: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Inter Font -->
     <style>
         body {
             font-family: 'Inter', sans-serif;
         }
-        .animate-spin {
+        /* Custom spinner animation */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #6366f1;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
             animation: spin 1s linear infinite;
         }
         @keyframes spin {
-            from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
+        .tab-button.active {
+            background-color: #4f46e5;
+            color: white;
+            border-bottom: 2px solid #4f46e5;
+        }
+        .grocery-item.checked, .exercise-item.checked {
+            text-decoration: line-through;
+            color: #9ca3af;
+        }
+        .exercise-item {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            transition: background-color 0.15s ease-in-out;
+        }
+        .exercise-item:hover {
+            background-color: #f3f4f6;
+        }
+        .week-nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
-</head>
-<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
-
-    <!-- Main App Container -->
-    <div id="app" class="flex flex-col flex-1">
-
-        <!-- Header -->
-        <header class="sticky top-0 z-40 bg-white shadow-sm">
-            <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-blue-600">FitFuel</h1>
-                <nav class="flex items-center gap-4">
-                    <button id="nav-meal-planner" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat mr-2 h-4 w-4"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
-                        Meal Planner
-                    </button>
-                    <button id="nav-workout-planner" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell mr-2 h-4 w-4"><path d="m6.5 13.5-1.5 1.5a2.12 2.12 0 0 0 3 3L8 16.5m5-5 5-5a2.12 2.12 0 0 0-3-3l-1.5 1.5m-5 5 5 5m0 0 1.5 1.5a2.12 2.12 0 0 0 3-3L16.5 13.5m-5-5-5-5m0 0a2.12 2.12 0 0 0-3 3L6.5 8.5m5-5-5-5a2.12 2.12 0 0 0-3 3L3.5 6.5m10-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
-                        Workout Planner
-                    </button>
-                    <button id="add-profile-btn" class="hidden sm:inline-flex items-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-blue-700 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user mr-2 h-4 w-4"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Add Profile
-                    </button>
-                    <button id="manage-profiles-btn" class="hidden sm:inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 hover:text-blue-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users mr-2 h-4 w-4"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        Profiles
-                    </button>
-                </nav>
-            </div>
-            <!-- Mobile Navigation -->
-            <div class="sm:hidden flex justify-around bg-white border-t border-gray-200">
-                <button id="nav-meal-planner-mobile" class="flex-1 rounded-none py-3 text-gray-500 hover:text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat h-5 w-5 mx-auto"></svg>
-                </button>
-                <button id="nav-workout-planner-mobile" class="flex-1 rounded-none py-3 text-gray-500 hover:text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell h-5 w-5 mx-auto"></svg>
-                </button>
-                <button id="nav-profiles-mobile" class="flex-1 rounded-none py-3 text-gray-500 hover:text-blue-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users h-5 w-5 mx-auto"></svg>
-                </button>
-            </div>
-        </header>
-
-        <!-- Main Content Area -->
-        <main id="main-content" class="flex-1 container mx-auto px-4 py-6">
-            <!-- Dynamic content will be injected here -->
-        </main>
-
-        <!-- Footer -->
-        <footer class="py-4 text-center text-sm text-gray-500 border-t">
-            <p>FitFuel &copy; 2024</p>
-            <p id="user-id-display">User ID: Loading...</p>
-        </footer>
-
-    </div>
-
-    <!-- Alert/Toast Container -->
-    <div id="toast-container" class="fixed bottom-4 right-4 z-[100] space-y-2"></div>
-
-    <!-- Modals -->
-    <div id="modal-container">
-        <!-- Profile Modal -->
-        <div id="profile-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-            <div class="bg-white rounded-lg p-6 max-w-md mx-auto w-full shadow-xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 id="profile-modal-title" class="text-2xl font-bold">Create New Profile</h3>
-                    <button onclick="closeModal('profile-modal')" class="text-gray-500 hover:text-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
-                </div>
-                <p id="profile-modal-description" class="text-sm text-gray-500 mb-4">Enter your details to get personalized plans.</p>
-                <form id="profile-form" class="grid gap-4 py-4">
-                    <input type="hidden" id="profile-id">
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="name" class="text-right text-sm font-medium text-gray-700">Name</label>
-                        <input type="text" id="name" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="age" class="text-right text-sm font-medium text-gray-700">Age</label>
-                        <input type="number" id="age" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="gender" class="text-right text-sm font-medium text-gray-700">Gender</label>
-                        <select id="gender" class="col-span-3 w-full px-3 py-2 border rounded-md">
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="weight" class="text-right text-sm font-medium text-gray-700">Weight (kg)</label>
-                        <input type="number" id="weight" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="height" class="text-right text-sm font-medium text-gray-700">Height (cm)</label>
-                        <input type="number" id="height" class="col-span-3 w-full px-3 py-2 border rounded-md" required>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="fitnessGoal" class="text-right text-sm font-medium text-gray-700">Goal</label>
-                        <select id="fitnessGoal" class="col-span-3 w-full px-3 py-2 border rounded-md">
-                            <option value="weight loss">Weight Loss</option>
-                            <option value="muscle gain">Muscle Gain</option>
-                            <option value="maintenance">Maintenance</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="activityLevel" class="text-right text-sm font-medium text-gray-700">Activity</label>
-                        <select id="activityLevel" class="col-span-3 w-full px-3 py-2 border rounded-md">
-                            <option value="sedentary">Sedentary</option>
-                            <option value="lightly active">Lightly Active</option>
-                            <option value="moderately active">Moderately Active</option>
-                            <option value="very active">Very Active</option>
-                        </select>
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="dietaryPreferences" class="text-right text-sm font-medium text-gray-700">Dietary</label>
-                        <input type="text" id="dietaryPreferences" placeholder="e.g., Vegetarian, Keto" class="col-span-3 w-full px-3 py-2 border rounded-md">
-                    </div>
-                    <div class="grid grid-cols-4 items-center gap-4">
-                        <label for="allergies" class="text-right text-sm font-medium text-gray-700">Allergies</label>
-                        <input type="text" id="allergies" placeholder="e.g., Peanuts, Dairy" class="col-span-3 w-full px-3 py-2 border rounded-md">
-                    </div>
-                    <div class="flex justify-end gap-2 mt-4">
-                        <button type="button" onclick="closeModal('profile-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300">Cancel</button>
-                        <button type="submit" id="save-profile-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Delete Confirmation Modal -->
-        <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-            <div class="bg-white rounded-lg p-6 max-w-sm mx-auto w-full shadow-xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-2xl font-bold">Are you sure?</h3>
-                    <button onclick="closeModal('delete-modal')" class="text-gray-500 hover:text-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
-                </div>
-                <p id="delete-modal-description" class="text-sm text-gray-500 mb-4">This action cannot be undone. This will permanently delete the profile and all associated data.</p>
-                <div class="flex justify-end gap-2 mt-4">
-                    <button type="button" onclick="closeModal('delete-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300">Cancel</button>
-                    <button id="confirm-delete-btn" class="px-4 py-2 bg-red-600 text-white font-semibold rounded-md hover:bg-red-700">Continue</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Workout Details Modal -->
-        <div id="workout-details-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-            <div class="bg-white rounded-lg p-6 max-w-md mx-auto w-full shadow-xl overflow-y-auto max-h-[90vh]">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 id="workout-details-modal-title" class="text-2xl font-bold">Workout Details</h3>
-                    <button onclick="closeModal('workout-details-modal')" class="text-gray-500 hover:text-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
-                </div>
-                <div id="workout-details-modal-content"></div>
-                <div class="flex items-center justify-between mt-4 border-t pt-4">
-                    <div class="flex items-center gap-2">
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" value="" class="sr-only peer" id="mark-workout-complete-toggle">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-                        </label>
-                        <span class="text-sm font-medium text-gray-700">Mark as Completed</span>
-                    </div>
-                    <p id="workout-completion-status" class="text-sm font-medium text-gray-500">Not Completed</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Group Plan Modal -->
-        <div id="group-plan-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden">
-            <div class="bg-white rounded-lg p-6 max-w-md mx-auto w-full shadow-xl">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-2xl font-bold">Create Group Plan</h3>
-                    <button onclick="closeModal('group-plan-modal')" class="text-gray-500 hover:text-gray-800">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                    </button>
-                </div>
-                <p class="text-sm text-gray-500 mb-4">Select the profiles to include in the group meal plan.</p>
-                <div id="group-profiles-list" class="space-y-2 overflow-y-auto max-h-[300px]"></div>
-                <div class="flex justify-end gap-2 mt-4">
-                    <button type="button" onclick="closeModal('group-plan-modal')" class="px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md hover:bg-gray-300">Cancel</button>
-                    <button id="generate-group-plan-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700">Generate Plan</button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- Firebase SDK Scripts -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getStorage } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+        import { getAuth, signInWithCustomToken, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: Your actual Firebase project configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDgZqwg-G-9OzHl4cr-km1UbasU5dDDvbE",
-            authDomain: "fuelfit-meli.firebaseapp.com",
-            projectId: "fuelfit-meli",
-            storageBucket: "fuelfit-meli.firebasestorage.app",
-            messagingSenderId: "1011290290269",
-            appId: "1:1011290290269:web:16e8dd81360ee4d57cf5b4"
+        // Global variables for Firebase services
+        window.firebase = {
+            initializeApp,
+            getAuth,
+            signInWithCustomToken,
+            onAuthStateChanged,
+            signInAnonymously,
+            getFirestore,
+            collection,
+            doc,
+            setDoc,
+            onSnapshot,
+            deleteDoc,
+            getDoc
         };
+    </script>
+</head>
+<body class="bg-gray-200 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-4xl w-full">
+        <!-- Application Title and Description -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold text-gray-900 mb-2">FitFuel Meli</h1>
+            <p class="text-lg text-gray-600">Enter your fitness goals to get a personalized workout and meal plan.</p>
+        </div>
         
-        // IMPORTANT: Insert your Gemini API key here. Get it from https://aistudio.google.com/app/apikey
-        const apiKey = "";
+        <!-- Setup Page: Profiles and Goals -->
+        <div id="setup-container" class="space-y-6">
+            <!-- Profile Management and Input Area -->
+            <div class="bg-gray-50 p-6 rounded-xl shadow-md border border-gray-200">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Manage Profiles</h2>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <div class="flex-1">
+                        <label for="profile-name" class="block text-sm font-medium text-gray-700">Profile Name</label>
+                        <input type="text" id="profile-name" class="w-full p-2 border border-gray-300 rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                    </div>
+                    <div class="flex-1">
+                        <label for="profile-select" class="block text-sm font-medium text-gray-700">Select Profile</label>
+                        <select id="profile-select" class="w-full p-2 border border-gray-300 rounded-lg mt-1 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"></select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="save-profile-btn" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600 transition-colors">Save Profile</button>
+                    <button id="delete-profile-btn" class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">Delete Profile</button>
+                    <button id="new-profile-btn" class="bg-indigo-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-600 transition-colors col-span-2">New Profile</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Fitness Goals Input for Person 1 -->
+                <div class="bg-gray-50 p-6 rounded-xl shadow-md border border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Person 1's Fitness Goals</h2>
+                    <textarea id="prompt-input-1" rows="8" class="w-full p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transition-all resize-none shadow-sm" placeholder="e.g., I want to build muscle. I am a 25-year-old male, 180 lbs, no dietary restrictions."></textarea>
+                </div>
+                <!-- Fitness Goals Input for Person 2 -->
+                <div class="bg-gray-50 p-6 rounded-xl shadow-md border border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Person 2's Fitness Goals</h2>
+                    <textarea id="prompt-input-2" rows="8" class="w-full p-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-4 focus:ring-indigo-500/50 transition-all resize-none shadow-sm" placeholder="e.g., I want to lose weight. I am a 30-year-old female, 140 lbs, I am a vegetarian."></textarea>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center mt-6 gap-4">
+                <button id="generate-btn" class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-500/50 flex items-center justify-center w-full sm:w-auto">
+                    <span id="btn-text">Generate Combined Plan</span>
+                    <div id="loading-spinner" class="spinner hidden ml-2"></div>
+                </button>
+                <button id="view-plan-btn" class="hidden bg-gray-400 text-white font-bold py-4 px-8 rounded-xl shadow-lg hover:bg-gray-500 transition-colors duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-gray-400/50 flex items-center justify-center w-full sm:w-auto">
+                    View Existing Plan
+                </button>
+            </div>
+        </div>
+
+        <!-- Plan View Page -->
+        <div id="plan-container" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <button id="back-to-setup-btn" class="text-indigo-600 font-semibold hover:text-indigo-800 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Back to Profiles
+                </button>
+                <h2 class="text-3xl font-bold text-gray-900">Your Personalized Plan</h2>
+                <div></div> <!-- Placeholder to balance flexbox -->
+            </div>
+            
+            <!-- Week Navigator -->
+            <div id="week-navigator" class="flex items-center justify-center space-x-4 mb-6">
+                <button id="prev-week-btn" class="week-nav-btn p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <span class="text-lg font-bold text-gray-800 flex items-center">Week <span id="current-week-display">1</span><div id="week-spinner" class="spinner hidden ml-2"></div></span>
+                <button id="next-week-btn" class="week-nav-btn p-2 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Tab buttons for toggling views -->
+            <div class="flex space-x-2 mb-4">
+                <button id="workout-tab-btn" class="tab-button px-4 py-2 rounded-lg text-gray-600 font-semibold hover:bg-gray-100 transition-colors">🏋️ Workout Plan</button>
+                <button id="meal-tab-btn" class="tab-button px-4 py-2 rounded-lg text-gray-600 font-semibold hover:bg-gray-100 transition-colors">🥗 Meal Plan</button>
+                <button id="grocery-tab-btn" class="tab-button px-4 py-2 rounded-lg text-gray-600 font-semibold hover:bg-gray-100 transition-colors">🛒 Grocery List</button>
+            </div>
+
+            <!-- Content for each tab -->
+            <div id="plan-content" class="bg-gray-50 p-8 rounded-xl border border-gray-200 shadow-inner space-y-8">
+                <!-- Combined workout plan section -->
+                <div id="workout-plan-section" class="tab-content hidden grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div id="workout-plan-person-1" class="space-y-4"></div>
+                    <div id="workout-plan-person-2" class="space-y-4"></div>
+                </div>
+                <!-- Combined meal plan section -->
+                <div id="meal-plan-section" class="tab-content hidden"></div>
+                <!-- Combined grocery list section -->
+                <div id="grocery-plan-section" class="tab-content hidden"></div>
+            </div>
+        </div>
+
+        <!-- Error Message Box (hidden by default) -->
+        <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl relative mt-4" role="alert">
+            <strong class="font-bold">Error!</strong>
+            <span id="error-message" class="block sm:inline ml-2">Something went wrong. Please try again.</span>
+        </div>
+
+        <!-- Modal for user details -->
+        <div id="user-details-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Your User ID</h3>
+                    <div class="mt-2 px-7 py-3">
+                        <p class="text-sm text-gray-500" id="user-id-display"></p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="close-modal-btn" class="px-4 py-2 bg-indigo-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Ensure firebase is available
+        const { initializeApp, getAuth, signInWithCustomToken, onAuthStateChanged, signInAnonymously, getFirestore, collection, doc, setDoc, onSnapshot, deleteDoc, getDoc } = window.firebase;
+
+        // The API key for Gemini is automatically handled by the Canvas environment if left empty.
+        const apiKey = '';
+
+        // Firebase config and app ID from the canvas environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
         
-        const generateUUID = () => {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
+        // State variables
+        let userId = null;
+        let profiles = [];
+        let selectedProfileId = null;
+        let currentWeek = 1;
+        let currentPlan = null; // Holds the full plan for the current week
+        let currentPlanSnapshotUnsubscribe = null;
+        let currentActiveTabId = 'workout-plan-section'; // New state variable to track the active tab
+
+        // DOM Element selectors
+        const setupContainer = document.getElementById('setup-container');
+        const planContainer = document.getElementById('plan-container');
+        const promptInput1 = document.getElementById('prompt-input-1');
+        const promptInput2 = document.getElementById('prompt-input-2');
+        const generateBtn = document.getElementById('generate-btn');
+        const viewPlanBtn = document.getElementById('view-plan-btn');
+        const btnText = document.getElementById('btn-text');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const errorBox = document.getElementById('error-box');
+        const errorMessage = document.getElementById('error-message');
+        const profileNameInput = document.getElementById('profile-name');
+        const profileSelect = document.getElementById('profile-select');
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        const deleteProfileBtn = document.getElementById('delete-profile-btn');
+        const newProfileBtn = document.getElementById('new-profile-btn');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const userDetailsModal = document.getElementById('user-details-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const currentWeekDisplay = document.getElementById('current-week-display');
+        const prevWeekBtn = document.getElementById('prev-week-btn');
+        const nextWeekBtn = document.getElementById('next-week-btn');
+        const backToSetupBtn = document.getElementById('back-to-setup-btn');
+        const weekSpinner = document.getElementById('week-spinner');
+
+
+        // Tab-related DOM elements
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const workoutPlanSection = document.getElementById('workout-plan-section');
+        const workoutPlanSection1 = document.getElementById('workout-plan-person-1');
+        const workoutPlanSection2 = document.getElementById('workout-plan-person-2');
+        const mealPlanSection = document.getElementById('meal-plan-section');
+        const groceryListSection = document.getElementById('grocery-plan-section');
+
+
+        /**
+         * Switches the view between the setup page and the plan page.
+         * @param {string} pageName 'setup' or 'plan'.
+         */
+        const showPage = (pageName) => {
+            if (pageName === 'setup') {
+                setupContainer.classList.remove('hidden');
+                planContainer.classList.add('hidden');
+            } else if (pageName === 'plan') {
+                setupContainer.classList.add('hidden');
+                planContainer.classList.remove('hidden');
+            }
+        };
+
+        /**
+         * Authenticates the user and sets up Firestore listeners.
+         */
+        const setupAuthAndFirestore = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase authentication failed:", error);
+                showError("Authentication failed. Please check your Firebase setup.");
+            }
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    userId = user.uid;
+                    userIdDisplay.textContent = `Your user ID is: ${userId}`;
+                    userDetailsModal.classList.remove('hidden');
+
+                    const profilesCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/profiles`);
+                    onSnapshot(profilesCollectionRef, (snapshot) => {
+                        profiles = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        renderProfiles();
+                        if (selectedProfileId) {
+                             updateUIBasedOnProfileSelection(selectedProfileId);
+                        }
+                    }, (error) => {
+                        console.error("Error listening to profiles:", error);
+                        showError("Failed to load profiles. Please try again.");
+                    });
+                } else {
+                    console.log("User is signed out.");
+                    userId = null;
+                    profiles = [];
+                    renderProfiles();
+                    currentPlan = null;
+                }
             });
         };
 
-        let app, db, auth;
-        const initFirebase = () => {
-            if (Object.values(firebaseConfig).every(val => val !== "")) {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                return true;
+        /**
+         * Loads and renders the full plan for a specific week from Firestore.
+         * Sets up a real-time listener for the current week's plan.
+         * @param {number} weekNumber The week to load.
+         */
+        const loadAndRenderPlan = (weekNumber) => {
+            if (!userId) {
+                return;
+            }
+            if (currentPlanSnapshotUnsubscribe) {
+                currentPlanSnapshotUnsubscribe(); // Unsubscribe from the previous week's listener
+            }
+
+            currentWeek = weekNumber;
+            currentWeekDisplay.textContent = currentWeek;
+
+            const planDocRef = doc(db, `artifacts/${appId}/users/${userId}/fullPlans/week-${currentWeek}`);
+            
+            // Set up a new listener for the current week's plan
+            currentPlanSnapshotUnsubscribe = onSnapshot(planDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    try {
+                        currentPlan = JSON.parse(data.plan);
+                        renderWorkoutPlans(currentPlan.workoutPlan1, currentPlan.workoutPlan2);
+                        renderMealPlan(currentPlan.mealPlan);
+                        renderGroceryList(currentPlan.groceryList);
+                    } catch (e) {
+                        console.error("Failed to parse plan from Firestore:", e);
+                        showError("Failed to load plan. Data format may be invalid.");
+                        currentPlan = null;
+                    }
+                    updateWeekNavigation();
+                    showTab(currentActiveTabId); // Show the previously active tab
+                } else {
+                    currentPlan = null;
+                    workoutPlanSection1.innerHTML = '';
+                    workoutPlanSection2.innerHTML = '';
+                    mealPlanSection.innerHTML = '';
+                    groceryListSection.innerHTML = '';
+                    updateWeekNavigation();
+                }
+            }, (error) => {
+                console.error("Error listening to plan:", error);
+                showError("Failed to load plan. Please try again.");
+                currentPlan = null;
+                updateWeekNavigation();
+            });
+        };
+
+        /**
+         * Checks if a plan exists for the selected profile and updates the UI accordingly.
+         * @param {string} profileId The ID of the selected profile.
+         */
+        const updateUIBasedOnProfileSelection = async (profileId) => {
+            if (!profileId) {
+                viewPlanBtn.classList.add('hidden');
+                generateBtn.textContent = 'Generate Combined Plan';
+                return;
+            }
+            const planDocRef = doc(db, `artifacts/${appId}/users/${userId}/fullPlans/week-1`);
+            const docSnap = await getDoc(planDocRef);
+
+            if (docSnap.exists()) {
+                viewPlanBtn.classList.remove('hidden');
+                generateBtn.textContent = 'Generate New Plan';
             } else {
-                console.error("Firebase config is missing. Please add your config to the firebaseConfig object.");
-                showToast("Firebase config missing. Please add your config to the code.", 'error');
-                return false;
+                viewPlanBtn.classList.add('hidden');
+                generateBtn.textContent = 'Generate Combined Plan';
             }
         };
 
-        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.appId;
-
-        let userId = null;
-        let profiles = [];
-        let currentProfile = null;
-        let mealPlan = null;
-        let workoutPlan = null;
-        let currentEditingProfile = null;
-        let currentPage = 'home';
-        let isLoading = false;
-        let activeTabIndex = 'Monday';
-        let showShoppingList = false;
-        let shoppingList = [];
-        let ingredientCategories = {
-            'Vegetables': ['spinach', 'broccoli', 'onions', 'garlic', 'tomatoes', 'carrots', 'sweet potatoes', 'bell peppers', 'lettuce', 'cucumber', 'zucchini', 'asparagus'],
-            'Fruits': ['apple', 'banana', 'orange', 'berries', 'avocado'],
-            'Proteins': ['chicken breast', 'salmon', 'eggs', 'turkey', 'lean beef', 'tofu', 'lentils'],
-            'Grains': ['brown rice', 'quinoa', 'oats', 'oatmeal', 'whole-wheat bread', 'pasta'],
-            'Dairy': ['greek yogurt', 'milk', 'cheese', 'parmesan'],
-            'Fats & Oils': ['olive oil', 'almonds', 'avocado', 'nuts', 'seeds'],
-            'Spices & Sauces': ['salt', 'pepper', 'oregano', 'basil', 'marinara sauce'],
-            'Other': []
+        /**
+         * Updates the state of the week navigation buttons.
+         */
+        const updateWeekNavigation = () => {
+            prevWeekBtn.disabled = currentWeek <= 1;
+            // The "next" button is enabled if a plan exists for the current week.
+            nextWeekBtn.disabled = !currentPlan;
         };
-        
-        const classifyIngredient = (name) => {
-            const lowerName = name.toLowerCase();
-            for (const category in ingredientCategories) {
-                if (ingredientCategories[category].some(item => lowerName.includes(item))) {
-                    return category;
+
+        /**
+         * Renders the list of profiles in the dropdown.
+         */
+        const renderProfiles = () => {
+            profileSelect.innerHTML = '<option value="">-- Select a Profile --</option>';
+            profiles.forEach(profile => {
+                const option = document.createElement('option');
+                option.value = profile.id;
+                option.textContent = profile.name;
+                profileSelect.appendChild(option);
+            });
+            if (selectedProfileId) {
+                profileSelect.value = selectedProfileId;
+            }
+        };
+
+        /**
+         * Handles saving or updating a user profile.
+         */
+        saveProfileBtn.addEventListener('click', async () => {
+            if (!userId) {
+                showError("User not authenticated. Please wait a moment.");
+                return;
+            }
+            const profileName = profileNameInput.value.trim();
+            const fitnessGoal1 = promptInput1.value.trim();
+            const fitnessGoal2 = promptInput2.value.trim();
+
+            if (!profileName) {
+                showError("Please enter a profile name.");
+                return;
+            }
+
+            const profileRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, selectedProfileId || crypto.randomUUID());
+
+            try {
+                // Save both goals as a single JSON string in Firestore
+                const goals = { goal1: fitnessGoal1, goal2: fitnessGoal2 };
+                await setDoc(profileRef, { name: profileName, goals: JSON.stringify(goals) }, { merge: true });
+                showError("Profile saved successfully!", "green");
+                selectedProfileId = profileRef.id;
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                showError("Failed to save profile. Please try again.");
+            }
+        });
+
+        /**
+         * Handles deleting a user profile.
+         */
+        deleteProfileBtn.addEventListener('click', async () => {
+            if (!selectedProfileId) {
+                showError("Please select a profile to delete.");
+                return;
+            }
+
+            const modalConfirm = confirm("Are you sure you want to delete this profile?");
+            if (modalConfirm) {
+                try {
+                    await deleteDoc(doc(db, `artifacts/${appId}/users/${userId}/profiles`, selectedProfileId));
+                    showError("Profile deleted successfully!", "green");
+                    selectedProfileId = null;
+                    profileNameInput.value = '';
+                    promptInput1.value = '';
+                    promptInput2.value = '';
+                    loadAndRenderPlan(1);
+                    updateUIBasedOnProfileSelection(null);
+                } catch (error) {
+                    console.error("Error deleting profile:", error);
+                    showError("Failed to delete profile. Please try again.");
                 }
             }
-            return 'Other';
-        };
+        });
 
-        const callGeminiApi = async (prompt, responseSchema) => {
-            if (!apiKey) {
-                throw new Error("Gemini API key is not set. Please add your key to the code.");
+        /**
+         * Clears inputs for a new profile.
+         */
+        newProfileBtn.addEventListener('click', () => {
+            profileNameInput.value = '';
+            promptInput1.value = '';
+            promptInput2.value = '';
+            selectedProfileId = null;
+            profileSelect.value = '';
+            // Reset to week 1 for a new profile
+            loadAndRenderPlan(1);
+            updateUIBasedOnProfileSelection(null);
+        });
+
+        /**
+         * Loads a selected profile's data into the input fields.
+         */
+        profileSelect.addEventListener('change', () => {
+            const profileId = profileSelect.value;
+            if (profileId) {
+                const profile = profiles.find(p => p.id === profileId);
+                if (profile) {
+                    selectedProfileId = profile.id;
+                    profileNameInput.value = profile.name;
+                    const goals = JSON.parse(profile.goals);
+                    promptInput1.value = goals.goal1;
+                    promptInput2.value = goals.goal2;
+                    updateUIBasedOnProfileSelection(profileId);
+                }
+            } else {
+                newProfileBtn.click();
             }
-            let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+        });
+
+        /**
+         * Handles the API call to the Gemini model with a structured JSON response.
+         * @param {string} prompt1 The prompt for person 1.
+         * @param {string} prompt2 The prompt for person 2.
+         * @param {object | null} previousPlan The plan from the previous week, for progression.
+         * @param {number} weekNumber The number of the week to generate.
+         */
+        const callGeminiAPI = async (prompt1, prompt2, previousPlan, weekNumber) => {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            let planPrompt = `Generate a workout plan for week ${weekNumber}. The workout plan should be for person 1 with the goal: "${prompt1}" and for person 2 with the goal: "${prompt2}".`;
+            
+            if (previousPlan) {
+                planPrompt += ` The workout plan must be a progression from the previous week's plan, with either increased intensity (more reps/sets) or different, slightly more challenging exercises. The meal plan must be entirely different from the previous week. The previous week's plan was: ${JSON.stringify(previousPlan)}.`;
+            } else {
+                planPrompt += ` Also, generate a single, unified meal plan for both people where the meal for each day is the same, but the quantities are adjusted for each person's goals. The quantities for each person must be included in the meal's description.`;
+            }
+
+            planPrompt += ` Lastly, generate a single, combined grocery list with total quantities for both people. Use European measurements. The response must be a single JSON object.`;
+
+            const chatHistory = [{
+                role: "user",
+                parts: [{ text: planPrompt }]
+            }];
+
             const payload = {
                 contents: chatHistory,
                 generationConfig: {
                     responseMimeType: "application/json",
-                    responseSchema: responseSchema,
-                },
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "workoutPlan1": {
+                                "type": "ARRAY",
+                                "description": "A weekly workout plan for Person 1.",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "day": { "type": "STRING" },
+                                        "exercises": {
+                                            "type": "ARRAY",
+                                            "items": {
+                                                "type": "OBJECT",
+                                                "properties": {
+                                                    "name": { "type": "STRING" },
+                                                    "sets": { "type": "STRING" },
+                                                    "reps": { "type": "STRING" }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "workoutPlan2": {
+                                "type": "ARRAY",
+                                "description": "A weekly workout plan for Person 2.",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "day": { "type": "STRING" },
+                                        "exercises": {
+                                            "type": "ARRAY",
+                                            "items": {
+                                                "type": "OBJECT",
+                                                "properties": {
+                                                    "name": { "type": "STRING" },
+                                                    "sets": { "type": "STRING" },
+                                                    "reps": { "type": "STRING" }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "mealPlan": {
+                                "type": "ARRAY",
+                                "description": "A daily meal plan with meals for both people.",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "day": { "type": "STRING" },
+                                        "meals": {
+                                            "type": "ARRAY",
+                                            "items": {
+                                                "type": "OBJECT",
+                                                "properties": {
+                                                    "name": { "type": "STRING" },
+                                                    "description1": { "type": "STRING", "description": "Meal description for Person 1, including quantity." },
+                                                    "description2": { "type": "STRING", "description": "Meal description for Person 2, including quantity." }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "groceryList": {
+                                "type": "ARRAY",
+                                "description": "A combined list of all ingredients needed for the meal plan with total quantities.",
+                                "items": {
+                                    "type": "OBJECT",
+                                    "properties": {
+                                        "item": { "type": "STRING" },
+                                        "quantity": { "type": "STRING" }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             };
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-            let response;
-            let retries = 0;
-            const maxRetries = 5;
-            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-            while (retries < maxRetries) {
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
                 try {
-                    response = await fetch(apiUrl, {
+                    const response = await fetch(url, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
+                        body: JSON.stringify(payload),
                     });
-                    if (response.status !== 429) break;
-                    retries++;
-                    await delay(Math.pow(2, retries) * 1000);
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`HTTP error! status: ${response.status}. Details: ${JSON.stringify(errorData)}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    // IMPROVED ERROR HANDLING: Check if the response structure is valid before parsing.
+                    const jsonPart = result?.candidates?.[0]?.content?.parts?.[0];
+                    if (!jsonPart || !jsonPart.text || jsonPart.text.trim() === '') {
+                        throw new Error('API response format is not as expected or is empty.');
+                    }
+                    
+                    // NEW: Add a try/catch around the JSON.parse for robustness
+                    try {
+                        return JSON.parse(jsonPart.text);
+                    } catch (parseError) {
+                        console.error('Failed to parse JSON from API response:', parseError);
+                        console.log('Raw API response text:', jsonPart.text);
+                        throw new Error('Failed to parse the API response. The format may be invalid.');
+                    }
+
                 } catch (error) {
-                    console.error("Fetch failed:", error);
-                    throw new Error("Failed to connect to Gemini API.");
-                }
-            }
-            if (response.status === 403) {
-                 throw new Error("Gemini API request failed with a 403 Forbidden error. This often means the API key is invalid or has insufficient permissions.");
-            }
-            if (!response || !response.ok) {
-                throw new Error("API request failed after multiple retries.");
-            }
-
-            const result = await response.json();
-            if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts) {
-                const jsonText = result.candidates[0].content.parts[0].text;
-                return JSON.parse(jsonText);
-            } else {
-                throw new Error("Unexpected API response structure.");
-            }
-        };
-
-        const generateMealPlan = async (selectedProfileIds = []) => {
-            if (selectedProfileIds.length === 0) {
-                showToast("Please select at least one profile.", 'error');
-                return;
-            }
-            isLoading = true;
-            updateLoadingState('meal-plan');
-            const generatingMessage = "Generating plan, one moment please...";
-            showToast(generatingMessage, 'success');
-            
-            try {
-                const selectedProfiles = profiles.filter(p => selectedProfileIds.includes(p.id));
-                let prompt;
-
-                if (selectedProfiles.length > 1) {
-                    const groupInfo = selectedProfiles.map(p => `Name: ${p.name}, Age: ${p.age}, Gender: ${p.gender}, Weight: ${p.weight}kg, Height: ${p.height}cm, Goal: ${p.fitnessGoal}, Dietary Preferences: ${p.dietaryPreferences}, Allergies: ${p.allergies}`).join('; ');
-                    prompt = `You are a professional nutritionist. Create a 7-day meal plan for a group with the following members, formatted as JSON. The group's profile information: ${groupInfo}. The plan should specify a dish name, total ingredients with measurements, and then individual portion sizes for each person. The plan should be realistic and healthy.`;
-                } else {
-                    const profile = selectedProfiles[0];
-                    prompt = `You are a professional nutritionist. Create a 7-day, 3-meal-per-day meal plan for the following user, formatted as JSON. The user's profile is: Name: ${profile.name}, Age: ${profile.age}, Gender: ${profile.gender}, Weight: ${profile.weight}kg, Height: ${profile.height}cm, BMI: ${profile.bmi}, Goal: ${profile.fitnessGoal}, Dietary Preferences: ${profile.dietaryPreferences}, Allergies: ${profile.allergies}. The plan should specify a dish name, ingredients with measurements, and individual portion sizes. The plan should be realistic and healthy.`;
-                }
-
-                const responseSchema = {
-                    "type": "OBJECT",
-                    "properties": {
-                        "weeklyPlan": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "day": { "type": "STRING" },
-                                    "meals": {
-                                        "type": "ARRAY",
-                                        "items": {
-                                            "type": "OBJECT",
-                                            "properties": {
-                                                "name": { "type": "STRING" },
-                                                "description": { "type": "STRING" },
-                                                "ingredients": { "type": "ARRAY", "items": { "type": "STRING" } },
-                                                "portionSizes": { "type": "STRING" }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                    console.error(`Attempt ${i + 1} failed:`, error);
+                    if (i < 4) {
+                        await new Promise(res => setTimeout(res, delay));
+                        delay *= 2; // Exponential backoff
+                    } else {
+                        throw error;
                     }
-                };
-
-                const newPlanData = await callGeminiApi(prompt, responseSchema);
-                mealPlan = { ...newPlanData, id: generateUUID(), createdAt: new Date().toISOString(), profileId: currentProfile.id, groupProfileIds: selectedProfileIds };
-                await saveMealPlanToHistory(mealPlan);
-                showToast("Meal plan generated successfully!");
-            } catch (error) {
-                console.error("Error generating meal plan:", error);
-                showToast("Failed to generate meal plan. Please try again.", 'error');
-            } finally {
-                isLoading = false;
-                updateLoadingState('meal-plan');
-                renderPage();
-                closeModal('group-plan-modal');
-            }
-        };
-
-        const generateWorkoutPlan = async () => {
-            if (!currentProfile) {
-                showToast("Please select or create a profile first.", 'error');
-                return;
-            }
-            isLoading = true;
-            updateLoadingState('workout-plan');
-            const generatingMessage = "Generating plan, one moment please...";
-            showToast(generatingMessage, 'success');
-
-            try {
-                const prompt = `You are a professional personal trainer. Create a 30-day workout plan for the following user, formatted as JSON. The user's profile is: Name: ${currentProfile.name}, Age: ${currentProfile.age}, Gender: ${currentProfile.gender}, Weight: ${currentProfile.weight}kg, Height: ${currentProfile.height}cm, BMI: ${currentProfile.bmi}, Goal: ${currentProfile.fitnessGoal}, Activity Level: ${currentProfile.activityLevel}. The plan should be for a calendar month. Include a variety of exercises, sets, reps, rest times, and a brief description for each day. Only include rest days where no exercises are provided.`;
-                
-                const responseSchema = {
-                    "type": "OBJECT",
-                    "properties": {
-                        "monthlyPlan": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "day": { "type": "STRING" },
-                                    "focus": { "type": "STRING" },
-                                    "exercises": {
-                                        "type": "ARRAY",
-                                        "items": {
-                                            "type": "OBJECT",
-                                            "properties": {
-                                                "name": { "type": "STRING" },
-                                                "sets": { "type": "NUMBER" },
-                                                "reps": { "type": "STRING" },
-                                                "rest": { "type": "STRING" },
-                                                "description": { "type": "STRING" }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                };
-
-                const newPlanData = await callGeminiApi(prompt, responseSchema);
-                workoutPlan = { ...newPlanData, id: generateUUID(), createdAt: new Date().toISOString(), profileId: currentProfile.id, completedWorkouts: [] };
-                await saveWorkoutPlanToHistory(workoutPlan);
-                showToast("Workout plan generated successfully!");
-            } catch (error) {
-                console.error("Error generating workout plan:", error);
-                showToast("Failed to generate workout plan. Please try again.", 'error');
-            } finally {
-                isLoading = false;
-                updateLoadingState('workout-plan');
-                renderPage();
-            }
-        };
-
-        const renderHomePage = () => {
-            const mainContent = document.getElementById('main-content');
-            if (!mainContent) return;
-            mainContent.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-[calc(100vh-180px)] text-center">
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to FitFuel!</h2>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-                        To get started, please create your first profile. This will allow the app to generate personalized meal and workout plans for you.
-                    </p>
-                    <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                        Create First Profile
-                    </button>
-                </div>
-            `;
-            lucide.createIcons();
-        };
-
-        const renderPage = () => {
-            const mainContent = document.getElementById('main-content');
-            if (!mainContent) return;
-            mainContent.innerHTML = '';
-            
-            if (!currentProfile) {
-                renderHomePage();
-                return;
-            }
-            mainContent.innerHTML += `
-                <div class="flex justify-between items-center mb-6 p-4 bg-white rounded-lg shadow-sm">
-                    <h2 class="text-xl font-semibold text-gray-800">
-                        Active Profile: <span class="text-blue-600">${currentProfile.name}</span>
-                    </h2>
-                    <div class="flex items-center gap-2">
-                        <button onclick="editProfile('${currentProfile.id}')" class="p-2 rounded-full text-gray-500 hover:text-blue-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit h-5 w-5"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                        </button>
-                        <button onclick="confirmDeleteProfile('${currentProfile.id}')" class="p-2 rounded-full text-gray-500 hover:text-red-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-5 w-5"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                        </button>
-                    </div>
-                </div>
-            `;
-            switch (currentPage) {
-                case 'home': mainContent.innerHTML += getHomePageHTML(); break;
-                case 'meal-planner': mainContent.innerHTML += getMealPlannerHTML(); break;
-                case 'workout-planner': mainContent.innerHTML += getWorkoutPlannerHTML(); break;
-                case 'profiles': mainContent.innerHTML += getProfileManagerHTML(); break;
-            }
-            lucide.createIcons();
-            addEventListeners();
-        };
-
-        const getHomePageHTML = () => {
-            return `
-                <div class="text-center p-8 bg-white rounded-xl shadow-lg">
-                    <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Welcome to FitFuel!</h2>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto mb-6">
-                        FitFuel is your all-in-one companion for a healthier lifestyle.
-                        Create personalized profiles to get tailored workout plans and weekly meal plans that align with your fitness goals.
-                        Track your progress, manage your shopping list, and stay motivated.
-                    </p>
-                    <div class="flex flex-col sm:flex-row justify-center gap-6 mt-8">
-                        <div class="bg-white rounded-xl shadow-lg p-6 flex-1">
-                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2 text-blue-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell"><path d="m6.5 13.5-1.5 1.5a2.12 2.12 0 0 0 3 3L8 16.5m5-5 5-5a2.12 2.12 0 0 0-3-3l-1.5 1.5m-5 5 5 5m0 0 1.5 1.5a2.12 2.12 0 0 0 3-3L16.5 13.5m-5-5-5-5m0 0a2.12 2.12 0 0 0-3 3L6.5 8.5m5-5-5-5a2.12 2.12 0 0 0-3 3L3.5 6.5m10-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
-                                Workout
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-2">Tailored monthly plans to reach your fitness goals.</p>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg p-6 flex-1">
-                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2 text-green-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
-                                Nutrition
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-2">Personalized weekly meal plans and shopping lists.</p>
-                        </div>
-                        <div class="bg-white rounded-xl shadow-lg p-6 flex-1">
-                            <h3 class="text-2xl font-bold flex items-center justify-center gap-2 text-purple-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                Group Plans
-                            </h3>
-                            <p class="text-sm text-gray-500 mt-2">Cook for everyone with combined meal and shopping lists.</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        const getProfileManagerHTML = () => {
-            const profilesHtml = profiles.length > 0 ? profiles.map(profile => `
-                <div class="flex items-center justify-between p-4 border rounded-lg mb-2 bg-gray-50">
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-lg">${profile.name}</h4>
-                        <p class="text-sm text-gray-500">Goal: ${profile.fitnessGoal} | BMI: ${profile.bmi}</p>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="editProfile('${profile.id}')" class="p-2 rounded-full text-gray-500 hover:text-blue-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit h-4 w-4"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-                        </button>
-                        <button onclick="confirmDeleteProfile('${profile.id}')" class="p-2 rounded-full text-gray-500 hover:text-red-600 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-4 w-4"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                        </button>
-                        <button onclick="switchProfile('${profile.id}')" ${currentProfile?.id === profile.id ? 'disabled' : ''} class="px-4 py-2 text-sm font-semibold rounded-md transition-colors ${currentProfile?.id === profile.id ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}">
-                            ${currentProfile?.id === profile.id ? 'Active' : 'Switch'}
-                        </button>
-                    </div>
-                </div>
-            `).join('') : '<p class="text-center text-gray-500">No profiles found. Create one to get started.</p>';
-
-            return `
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="mb-4">
-                        <h3 class="text-2xl font-bold">Profiles</h3>
-                        <p class="text-sm text-gray-500">Create, manage, and switch between multiple user profiles.</p>
-                    </div>
-                    <div class="space-y-4">
-                        <button onclick="openProfileModal()" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-                            Create New Profile
-                        </button>
-                        <hr class="h-[1px] bg-gray-200 my-4">
-                        <div class="overflow-y-auto h-[400px]">
-                            ${profilesHtml}
-                        </div>
-                    </div>
-                </div>
-            `;
-        };
-
-        const getMealPlannerHTML = () => {
-            const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-            
-            let mealPlanContent = "";
-
-            if (mealPlan) {
-                mealPlanContent = `
-                    <div class="mt-6">
-                        <div class="flex items-center space-x-2">
-                            <button onclick="toggleView('meal-plan')" class="px-4 py-2 rounded-full text-sm font-medium ${!showShoppingList ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}">
-                                Meal Plan
-                            </button>
-                            <button onclick="toggleView('shopping-list')" class="px-4 py-2 rounded-full text-sm font-medium ${showShoppingList ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-200'}">
-                                Shopping List
-                            </button>
-                        </div>
-                        <div id="meal-plan-view" class="mt-4 ${showShoppingList ? 'hidden' : ''}">
-                            <h3 class="text-lg font-semibold mb-2">Weekly Plan</h3>
-                            <div class="w-full mb-4">
-                                <label for="day-select" class="block text-sm font-medium text-gray-700 mb-2">Select a day:</label>
-                                <select id="day-select" onchange="switchMealDay(this.value)" class="w-full px-3 py-2 border rounded-md">
-                                    ${daysOfWeek.map(day => `<option value="${day}" ${activeTabIndex === day ? 'selected' : ''}>${day}</option>`).join('')}
-                                </select>
-                            </div>
-                            <div id="meal-day-content">
-                                ${getMealDayContentHTML()}
-                            </div>
-                        </div>
-                        <div id="shopping-list-view" class="mt-4 ${showShoppingList ? '' : 'hidden'}">
-                            ${getShoppingListHTML()}
-                        </div>
-                    </div>
-                `;
-            } else {
-                mealPlanContent = `<p class="text-center text-gray-500">Generate a meal plan to see it here.</p>`;
-            }
-            
-            return `
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="mb-4">
-                        <h3 class="text-2xl font-bold">Meal Planner</h3>
-                        <p class="text-sm text-gray-500">Generate and manage personalized weekly meal plans.</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
-                        <button id="open-group-plan-modal-btn" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
-                            <span id="meal-plan-loading-icon" class="hidden animate-spin h-5 w-5 text-white mr-3">
-                                <svg class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"></svg>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-users mr-2 h-4 w-4" id="meal-plan-icon"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Generate Group Plan
-                        </button>
-                        <button id="generate-personal-plan-btn" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chef-hat mr-2 h-4 w-4"><path d="M17 21a1 1 0 0 0 1 1a1 1 0 0 0 1-1v-4a1 1 0 0 0-1-1v-2a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1v2a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1a1 1 0 0 0 1-1a3 3 0 0 1 3-3a3 3 0 0 1 3 3z"/><path d="M16 11V7a4 4 0 0 0-8 0v4"/><path d="M17 11h2.5L20 10.5M5 11H3l-.5-.5"/><path d="M14 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-2z"/></svg>
-                           Generate Personal Plan
-                        </button>
-                    </div>
-                    ${mealPlanContent}
-                </div>
-            `;
-        };
-
-        const getMealDayContentHTML = () => {
-            if (!mealPlan || !mealPlan.weeklyPlan) {
-                return '';
-            }
-            const day = mealPlan.weeklyPlan.find(d => d.day === activeTabIndex);
-            if (!day) return '';
-            return day.meals.map(meal => `
-                <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                    <h4 class="font-semibold text-lg mb-1">${meal.name}</h4>
-                    <p class="text-gray-600">${meal.description}</p>
-                    <p class="text-sm text-gray-500 mt-2">**Portion:** ${meal.portionSizes}</p>
-                    <div class="mt-4">
-                        <p class="font-semibold text-sm">Ingredients:</p>
-                        <ul class="list-disc list-inside text-sm text-gray-500 ml-4">
-                            ${(meal.ingredients || []).map(ingredient => `<li>${ingredient}</li>`).join('')}
-                        </ul>
-                    </div>
-                </div>
-            `).join('');
-        };
-
-        const getShoppingListHTML = () => {
-            if (!mealPlan) {
-                return `<p class="text-center text-gray-500">Your shopping list is empty. Generate a meal plan to create one.</p>`;
-            }
-            
-            const allIngredients = mealPlan.weeklyPlan.flatMap(day => day.meals.flatMap(meal => meal.ingredients || []));
-            const shoppingListMap = {};
-
-            allIngredients.forEach(item => {
-                const match = item.match(/^(\d+\.?\d*)\s*(g|kg|ml|l|tbsp|tsp|cup|cups)?\s*(.+)$/i);
-                let quantity = 1;
-                let unit = '';
-                let name = item;
-                if (match) {
-                    quantity = parseFloat(match[1]);
-                    unit = match[2] || '';
-                    name = match[3].trim();
-                } else {
-                    name = item.split(',')[0].trim();
-                    quantity = 1; 
                 }
-
-                const cleanedName = name.toLowerCase().replace(/s$/, '').trim();
-                
-                if (!shoppingListMap[cleanedName]) {
-                    shoppingListMap[cleanedName] = { 
-                        name: cleanedName, 
-                        originalName: name, 
-                        quantity: quantity, 
-                        unit: unit, 
-                        purchased: false 
-                    };
-                } else {
-                    shoppingListMap[cleanedName].quantity += quantity;
-                }
-            });
-            
-            let organizedHtml = '';
-            const allCategories = [...new Set(Object.values(shoppingListMap).map(item => classifyIngredient(item.name)))];
-            const sortedCategories = ['Proteins', 'Vegetables', 'Fruits', 'Grains', 'Dairy', 'Fats & Oils', 'Spices & Sauces', 'Other'].filter(cat => allCategories.includes(cat));
-
-            sortedCategories.forEach(category => {
-                 const categoryItems = Object.values(shoppingListMap).filter(item => classifyIngredient(item.name) === category);
-                 if (categoryItems.length > 0) {
-                     organizedHtml += `<div class="mb-4">`;
-                     organizedHtml += `<h4 class="font-bold text-lg text-blue-600">${category}</h4>`;
-                     const listItemsHtml = categoryItems.map(item => `
-                         <div class="flex items-center gap-4 py-2 border-b last:border-b-0">
-                             <input type="checkbox" id="item-${item.originalName.replace(/\s+/g, '-')}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" ${item.purchased ? 'checked' : ''} onchange="toggleShoppingItem('${item.originalName}')">
-                             <label for="item-${item.originalName.replace(/\s+/g, '-')}" class="flex-1 text-base ${item.purchased ? 'line-through text-gray-400' : ''}">
-                                 <span class="font-medium">${item.originalName}</span>
-                                 <span class="ml-2 text-gray-500">${item.displayQuantity}</span>
-                             </label>
-                         </div>
-                     `).join('');
-                     organizedHtml += listItemsHtml;
-                     organizedHtml += `</div>`;
-                 }
-            });
-
-            return `
-                <div class="flex gap-2 mb-4">
-                    <button onclick="downloadShoppingList()" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download h-4 w-4 mr-2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                        Download
-                    </button>
-                    <button onclick="shareShoppingList()" class="flex-1 px-4 py-2 text-gray-800 font-semibold rounded-md hover:bg-gray-200 transition-colors border bg-white flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share-2 h-4 w-4 mr-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
-                        Share
-                    </button>
-                </div>
-                <div class="overflow-y-auto h-[400px] rounded-md border p-4">
-                    ${organizedHtml}
-                </div>
-            `;
-        }
+            }
+        };
         
-        const getWorkoutPlannerHTML = () => {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth();
-            const firstDayOfMonth = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-            
-            let calendarHtml = '<div class="grid grid-cols-7 gap-1 text-center font-bold text-gray-500 text-sm">';
-            const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            weekDays.forEach(day => calendarHtml += `<span>${day}</span>`);
-            calendarHtml += '</div><div class="grid grid-cols-7 gap-1 mt-2">';
-            
-            for (let i = 0; i < firstDayOfMonth; i++) {
-                calendarHtml += `<div class="p-2 text-center text-gray-300"></div>`;
-            }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dayIndex = day - 1;
-                const workoutForDay = workoutPlan?.monthlyPlan[dayIndex];
-                const isCompleted = workoutPlan?.completedWorkouts?.includes(dayIndex);
-                const isCurrentDay = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-                
-                const dayClass = `p-2 rounded-lg transition-colors cursor-pointer ${isCurrentDay ? 'bg-blue-600 text-white' : 'hover:bg-gray-200'}`;
-                const workoutClass = workoutForDay?.exercises?.length > 0 ? 'bg-green-500 text-white font-bold' : 'bg-gray-200 text-gray-500';
-                const completedClass = isCompleted ? 'border-2 border-green-500' : '';
-                
-                calendarHtml += `
-                    <div class="${dayClass} ${workoutForDay ? workoutClass : ''} ${completedClass} flex flex-col items-center" onclick="showWorkoutDetailsForDay(${dayIndex})">
-                        <span>${day}</span>
-                        ${workoutForDay && workoutForDay.exercises.length > 0 ? `<span class="text-xs mt-1 truncate">${workoutForDay.focus}</span>` : ''}
-                    </div>
-                `;
-            }
-            calendarHtml += '</div>';
-
-            return `
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="mb-4">
-                        <h3 class="text-2xl font-bold">Workout Planner</h3>
-                        <p class="text-sm text-gray-500">Generate and track personalized monthly workout plans.</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-4 mb-6">
-                        <button id="generate-workout-plan-btn" class="flex-1 px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
-                            <span id="workout-plan-loading-icon" class="hidden animate-spin h-5 w-5 text-white mr-3">
-                                <svg class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" viewBox="0 0 24 24"></svg>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-dumbbell h-4 w-4 mr-2" id="workout-plan-icon"><path d="m6.5 13.5-1.5 1.5a2.12 2.12 0 0 0 3 3L8 16.5m5-5 5-5a2.12 2.12 0 0 0-3-3l-1.5 1.5m-5 5 5 5m0 0 1.5 1.5a2.12 2.12 0 0 0 3-3L16.5 13.5m-5-5-5-5m0 0a2.12 2.12 0 0 0-3 3L6.5 8.5m5-5-5-5a2.12 2.12 0 0 0-3 3L3.5 6.5m10-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-5 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
-                            Generate Workout Plan
-                        </button>
-                    </div>
-
-                    ${workoutPlan ? `
-                        <div class="mt-6">
-                            <h3 class="text-lg font-semibold mb-2">Current Month: ${monthNames[month]} ${year}</h3>
-                            ${calendarHtml}
-                        </div>
-                    ` : `<p class="text-center text-gray-500">Generate a workout plan to see it here.</p>`}
-                </div>
-            `;
-        };
-
-        const showToast = (message, type = 'success') => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            let bgColor = 'bg-green-500';
-            if (type === 'error') bgColor = 'bg-red-500';
-
-            toast.className = `p-4 rounded-md text-white shadow-lg flex items-center gap-2 ${bgColor}`;
-            toast.innerHTML = `<p>${message}</p>`;
-
-            container.prepend(toast);
-            setTimeout(() => toast.remove(), 5000);
-        };
-
-        const openModal = (id, data = null) => {
-            const modal = document.getElementById(id);
-            if (modal) modal.classList.remove('hidden');
-
-            if (id === 'profile-modal' && data) {
-                document.getElementById('profile-id').value = data.id || '';
-                document.getElementById('name').value = data.name || '';
-                document.getElementById('age').value = data.age || '';
-                document.getElementById('gender').value = data.gender || 'male';
-                document.getElementById('weight').value = data.weight || '';
-                document.getElementById('height').value = data.height || '';
-                document.getElementById('dietaryPreferences').value = data.dietaryPreferences || '';
-                document.getElementById('allergies').value = data.allergies || '';
-                document.getElementById('fitnessGoal').value = data.fitnessGoal || 'maintenance';
-                document.getElementById('activityLevel').value = data.activityLevel || 'sedentary';
-                document.getElementById('profile-modal-title').textContent = 'Edit Profile';
-            } else if (id === 'profile-modal') {
-                document.getElementById('profile-form').reset();
-                document.getElementById('profile-id').value = '';
-                document.getElementById('profile-modal-title').textContent = 'Create New Profile';
-            }
-        };
-
-        const closeModal = (id) => {
-            const modal = document.getElementById(id);
-            if (modal) modal.classList.add('hidden');
-        };
-
-        const saveProfile = async (e) => {
-            e.preventDefault();
+        /**
+         * Saves the full plan for a given week to Firestore.
+         * @param {object} planData The full plan object to save.
+         * @param {number} week The week number.
+         */
+        const savePlan = async (planData, week) => {
             if (!userId) {
-                showToast("User not authenticated. Please try again.", 'error');
+                console.error("User not authenticated. Cannot save plan.");
+                showError("User not authenticated. Cannot save plan. Please refresh the page.");
                 return;
             }
-
-            const profileData = {
-                id: document.getElementById('profile-id').value || null,
-                name: document.getElementById('name').value,
-                age: document.getElementById('age').value,
-                gender: document.getElementById('gender').value,
-                weight: parseFloat(document.getElementById('weight').value),
-                height: parseFloat(document.getElementById('height').value),
-                dietaryPreferences: document.getElementById('dietaryPreferences').value,
-                allergies: document.getElementById('allergies').value,
-                fitnessGoal: document.getElementById('fitnessGoal').value,
-                activityLevel: document.getElementById('activityLevel').value,
-            };
-
-            if (!profileData.name || !profileData.age || !profileData.weight || !profileData.height) {
-                showToast("Please fill in all required fields.", 'error');
-                return;
-            }
-
-            profileData.bmi = (profileData.weight / ((profileData.height / 100) ** 2)).toFixed(2);
-            isLoading = true;
-
+            const planDocRef = doc(db, `artifacts/${appId}/users/${userId}/fullPlans/week-${week}`);
             try {
-                if (profileData.id) {
-                    const docRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, profileData.id);
-                    await setDoc(docRef, profileData);
-                    showToast("Profile updated successfully.");
-                } else {
-                    const profilesRef = collection(db, `artifacts/${appId}/users/${userId}/profiles`);
-                    const newDoc = await addDoc(profilesRef, profileData);
-                    profileData.id = newDoc.id;
-                    profiles.push(profileData);
-                    currentProfile = profileData;
-                    showToast("New profile created.");
-                }
-                closeModal('profile-modal');
+                await setDoc(planDocRef, { plan: JSON.stringify(planData) });
             } catch (error) {
-                console.error("Error saving profile:", error);
-                showToast("Failed to save profile. Please try again.", 'error');
-            } finally {
-                isLoading = false;
+                console.error("Failed to save plan:", error);
+                showError("Failed to save plan. Please try again.");
             }
         };
 
-        const deleteProfile = async (profileId) => {
-            if (!userId || !profileId) return;
-            isLoading = true;
-            try {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/profiles`, profileId);
-                await deleteDoc(docRef);
-                showToast("Profile and associated plans deleted.");
-                closeModal('delete-modal');
-            } catch (error) {
-                console.error("Error deleting profile:", error);
-                showToast("Failed to delete profile. Please try again.", 'error');
-            } finally {
-                isLoading = false;
-            }
+        /**
+         * Renders the workout plan content for a specific person.
+         * @param {object} planData The workout plan array for one person.
+         * @param {number} personNumber The person's number (1 or 2).
+         * @returns {string} The HTML for the workout plan.
+         */
+        const renderWorkoutPlan = (planData, personNumber) => {
+            let html = `<h3 class="text-xl font-bold text-gray-800 mb-4">Workout Plan for Person ${personNumber}</h3>`;
+            html += '<div class="space-y-4">';
+            planData.forEach((dayPlan, dayIndex) => {
+                html += `<div class="p-6 bg-white rounded-lg shadow-md border border-gray-100">`;
+                html += `<h4 class="text-xl font-semibold text-indigo-600 mb-2">${dayPlan.day}</h4>`;
+                html += `<ul class="list-none mt-2 space-y-1 text-gray-700">`;
+                dayPlan.exercises.forEach((exercise, exerciseIndex) => {
+                    const checkedClass = exercise.checked ? 'checked' : '';
+                    html += `<li class="exercise-item py-1 px-2 rounded-md hover:bg-gray-100 transition-colors ${checkedClass}" data-person="${personNumber}" data-day-index="${dayIndex}" data-exercise-index="${exerciseIndex}">
+                        <span class="font-medium">${exercise.name}:</span> ${exercise.sets} sets, ${exercise.reps} reps
+                    </li>`;
+                });
+                html += `</ul>`;
+                html += `</div>`;
+            });
+            html += '</div>';
+            return html;
         };
 
-        window.confirmDeleteProfile = (profileId) => {
-            currentEditingProfile = profiles.find(p => p.id === profileId);
-            if (currentEditingProfile) {
-                document.getElementById('delete-modal-description').innerHTML = `This action cannot be undone. This will permanently delete the profile for **${currentEditingProfile.name}** and all associated data.`;
-                openModal('delete-modal');
-            }
+        const renderWorkoutPlans = (plan1, plan2) => {
+            workoutPlanSection1.innerHTML = renderWorkoutPlan(plan1, 1);
+            workoutPlanSection2.innerHTML = renderWorkoutPlan(plan2, 2);
         };
         
-        const saveMealPlanToHistory = async (plan) => {
-            if (!db || !userId || !plan) return;
-            try {
-                const plansRef = collection(db, `artifacts/${appId}/users/${userId}/mealPlans`);
-                await addDoc(plansRef, plan);
-            } catch (error) {
-                console.error("Error saving meal plan to history:", error);
+        // Event listener for clicking on workout plan items
+        workoutPlanSection.addEventListener('click', (event) => {
+            const exerciseItem = event.target.closest('.exercise-item');
+            if (exerciseItem && currentPlan) {
+                const person = parseInt(exerciseItem.dataset.person, 10);
+                const dayIndex = parseInt(exerciseItem.dataset.day-index, 10);
+                const exerciseIndex = parseInt(exerciseItem.dataset.exercise-index, 10);
+
+                if (person === 1 && currentPlan.workoutPlan1[dayIndex] && currentPlan.workoutPlan1[dayIndex].exercises[exerciseIndex]) {
+                    currentPlan.workoutPlan1[dayIndex].exercises[exerciseIndex].checked = !currentPlan.workoutPlan1[dayIndex].exercises[exerciseIndex].checked;
+                } else if (person === 2 && currentPlan.workoutPlan2[dayIndex] && currentPlan.workoutPlan2[dayIndex].exercises[exerciseIndex]) {
+                    currentPlan.workoutPlan2[dayIndex].exercises[exerciseIndex].checked = !currentPlan.workoutPlan2[dayIndex].exercises[exerciseIndex].checked;
+                }
+                savePlan(currentPlan, currentWeek);
             }
+        });
+
+
+        /**
+         * Renders the combined meal plan content.
+         * @param {object} planData The full meal plan object.
+         * @returns {string} The HTML for the combined meal plan.
+         */
+        const renderMealPlan = (planData) => {
+            let html = `
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Combined Meal Plan</h3>
+                <div class="space-y-6">
+            `;
+            planData.forEach(dayPlan => {
+                html += `
+                    <div class="p-6 bg-white rounded-lg shadow-md border border-gray-100">
+                        <h4 class="text-xl font-semibold text-indigo-600 mb-4">${dayPlan.day}</h4>
+                        <ul class="list-none space-y-4">
+                `;
+                dayPlan.meals.forEach(meal => {
+                    html += `
+                        <li class="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0">
+                            <p class="font-bold text-lg text-gray-900">${meal.name}</p>
+                            <div class="mt-2 text-gray-700 space-y-1">
+                                <p><span class="font-semibold text-indigo-500">Person 1:</span> ${meal.description1}</p>
+                                <p><span class="font-semibold text-indigo-500">Person 2:</span> ${meal.description2}</p>
+                            </div>
+                        </li>
+                    `;
+                });
+                html += `</ul></div>`;
+            });
+            html += '</div>';
+            mealPlanSection.innerHTML = html;
+        };
+        
+        /**
+         * Renders the grocery list content as an interactive checklist.
+         * @param {Array<Object>} list The grocery list with checked state.
+         */
+        const renderGroceryList = (list) => {
+            let html = `<h3 class="text-xl font-bold text-gray-800 mb-4">Combined Grocery List</h3>`;
+            html += '<div class="p-6 bg-white rounded-lg shadow-md border border-gray-100">';
+            html += '<ul class="list-none columns-2 text-gray-700">';
+            list.forEach((item, index) => {
+                const checkedClass = item.checked ? 'checked' : '';
+                html += `<li class="grocery-item cursor-pointer py-1 px-2 rounded-md hover:bg-gray-100 transition-colors ${checkedClass}" data-index="${index}">${item.item} - ${item.quantity}</li>`;
+            });
+            html += '</ul>';
+            html += '</div>';
+            groceryListSection.innerHTML = html;
         };
 
-        const saveWorkoutPlanToHistory = async (plan) => {
-            if (!db || !userId || !plan) return;
-            try {
-                const plansRef = collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`);
-                await addDoc(plansRef, plan);
-            } catch (error) {
-                console.error("Error saving workout plan to history:", error);
+        // Event listener for clicking on grocery list items
+        groceryListSection.addEventListener('click', (event) => {
+            const listItem = event.target.closest('.grocery-item');
+            if (listItem && currentPlan) {
+                const index = parseInt(listItem.dataset.index, 10);
+                if (!isNaN(index) && currentPlan.groceryList[index]) {
+                    currentPlan.groceryList[index].checked = !currentPlan.groceryList[index].checked;
+                    savePlan(currentPlan, currentWeek);
+                }
             }
-        };
+        });
 
-        const updateLoadingState = (planType) => {
-            const button = document.getElementById(`generate-${planType}-btn`);
-            const icon = document.getElementById(`${planType}-icon`);
-            const loadingIcon = document.getElementById(`${planType}-loading-icon`);
-            const buttonText = document.getElementById(`${planType}-btn-text`);
-
-            if (isLoading) {
-                if (button) button.disabled = true;
-                if (icon) icon.classList.add('hidden');
-                if (loadingIcon) loadingIcon.classList.remove('hidden');
-                if (buttonText) buttonText.textContent = "Generating plan...";
+        /**
+         * Shows the selected tab and hides others.
+         * @param {string} tabId The ID of the tab to show.
+         */
+        const showTab = (tabId) => {
+            tabContents.forEach(content => content.classList.add('hidden'));
+            tabButtons.forEach(button => button.classList.remove('active'));
+        
+            const tabContentElement = document.getElementById(tabId);
+            if (tabContentElement) {
+                tabContentElement.classList.remove('hidden');
             } else {
-                if (button) button.disabled = false;
-                if (icon) icon.classList.remove('hidden');
-                if (loadingIcon) loadingIcon.classList.add('hidden');
-                if (buttonText) buttonText.textContent = `Generate ${planType === 'meal-plan' ? 'Meal Plan' : 'Workout Plan'}`;
+                console.error(`Tab content element with ID "${tabId}" not found.`);
             }
+
+            const baseId = tabId.replace('-plan-section', '');
+            const buttonId = `${baseId}-tab-btn`;
+            const tabButtonElement = document.getElementById(buttonId);
+            if (tabButtonElement) {
+                tabButtonElement.classList.add('active');
+            } else {
+                console.error(`Tab button element with ID "${buttonId}" not found.`);
+            }
+            // Update the active tab state
+            currentActiveTabId = tabId;
         };
 
-        window.toggleView = (view) => {
-            showShoppingList = view === 'shopping-list';
-            if (showShoppingList) {
-                 generateAndRenderShoppingList();
-            }
-            renderPage();
-        };
+        // Event listeners for tab buttons
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.id.replace('-tab-btn', '-plan-section');
+                showTab(tabId);
+            });
+        });
 
-        const generateAndRenderShoppingList = () => {
-            if (!mealPlan) {
-                shoppingList = [];
+        // Event listener for the main generate button
+        generateBtn.addEventListener('click', async () => {
+            const userPrompt1 = promptInput1.value.trim();
+            const userPrompt2 = promptInput2.value.trim();
+
+            if (!userPrompt1 || !userPrompt2) {
+                showError('Please enter fitness goals for both people to generate a combined plan.');
                 return;
             }
 
-            const allIngredients = mealPlan.weeklyPlan.flatMap(day => day.meals.flatMap(meal => meal.ingredients || []));
-            const shoppingListMap = {};
+            setLoading(true);
+            hideError();
 
-            allIngredients.forEach(item => {
-                const match = item.match(/^(\d+\.?\d*)\s*(g|kg|ml|l|tbsp|tsp|cup|cups)?\s*(.+)$/i);
-                let quantity = 1;
-                let unit = '';
-                let name = item;
-                if (match) {
-                    quantity = parseFloat(match[1]);
-                    unit = match[2] || '';
-                    name = match[3].trim();
-                } else {
-                    name = item.split(',')[0].trim();
-                    quantity = 1; 
-                }
-
-                const cleanedName = name.toLowerCase().replace(/s$/, '').trim();
+            try {
+                const rawPlanData = await callGeminiAPI(userPrompt1, userPrompt2, null, 1);
                 
-                if (!shoppingListMap[cleanedName]) {
-                    shoppingListMap[cleanedName] = { 
-                        name: cleanedName, 
-                        originalName: name, 
-                        quantity: quantity, 
-                        unit: unit, 
-                        purchased: false 
-                    };
-                } else {
-                    shoppingListMap[cleanedName].quantity += quantity;
+                if (!rawPlanData) {
+                    throw new Error("API call returned no data.");
                 }
-            });
-            
-            shoppingList = Object.values(shoppingListMap).map(item => ({ 
-                ...item,
-                displayQuantity: item.unit ? `${item.quantity} ${item.unit}` : item.quantity > 1 ? `x${item.quantity}` : ''
-            }));
-        };
 
-        window.toggleShoppingItem = (itemName) => {
-             const item = shoppingList.find(i => i.originalName === itemName);
-             if (item) {
-                 item.purchased = !item.purchased;
-             }
-             renderPage();
+                // Initialize the checked state for all exercises and grocery items
+                const newPlanData = {
+                    ...rawPlanData,
+                    workoutPlan1: rawPlanData.workoutPlan1.map(day => ({
+                        ...day,
+                        exercises: day.exercises.map(ex => ({ ...ex, checked: false }))
+                    })),
+                    workoutPlan2: rawPlanData.workoutPlan2.map(day => ({
+                        ...day,
+                        exercises: day.exercises.map(ex => ({ ...ex, checked: false }))
+                    })),
+                    groceryList: rawPlanData.groceryList.map(item => ({ ...item, checked: false }))
+                };
+                
+                await savePlan(newPlanData, 1);
+                // Reset the active tab to the default for a new plan
+                currentActiveTabId = 'workout-plan-section';
+                loadAndRenderPlan(1);
+                showPage('plan'); // Switch to plan view after successful generation
+            } catch (error) {
+                console.error("Failed to generate or parse response:", error);
+                showError(`An error occurred: ${error.message}. Please check your prompts and try again.`);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // New event listener for "View Existing Plan" button
+        viewPlanBtn.addEventListener('click', () => {
+            if (selectedProfileId) {
+                loadAndRenderPlan(1);
+                showPage('plan');
+            }
+        });
+
+        // Event listener for "Previous Week" button
+        prevWeekBtn.addEventListener('click', () => {
+            if (currentWeek > 1) {
+                loadAndRenderPlan(currentWeek - 1);
+            }
+        });
+
+        // Event listener for "Next Week" button
+        nextWeekBtn.addEventListener('click', async () => {
+            if (currentPlan) {
+                const userPrompt1 = promptInput1.value.trim();
+                const userPrompt2 = promptInput2.value.trim();
+                const nextWeekNumber = currentWeek + 1;
+                
+                setWeekLoading(true);
+
+                try {
+                    const nextWeekDocRef = doc(db, `artifacts/${appId}/users/${userId}/fullPlans/week-${nextWeekNumber}`);
+                    const docSnap = await getDoc(nextWeekDocRef);
+                    
+                    if (docSnap.exists()) {
+                        loadAndRenderPlan(nextWeekNumber);
+                    } else {
+                        const previousPlan = currentPlan;
+                        const rawPlanData = await callGeminiAPI(userPrompt1, userPrompt2, previousPlan, nextWeekNumber);
+                        
+                        if (!rawPlanData) {
+                            throw new Error("API call returned no data for the next week.");
+                        }
+
+                        // Initialize the checked state for all exercises and grocery items
+                        const newPlanData = {
+                            ...rawPlanData,
+                            workoutPlan1: rawPlanData.workoutPlan1.map(day => ({
+                                ...day,
+                                exercises: day.exercises.map(ex => ({ ...ex, checked: false }))
+                            })),
+                            workoutPlan2: rawPlanData.workoutPlan2.map(day => ({
+                                ...day,
+                                exercises: day.exercises.map(ex => ({ ...ex, checked: false }))
+                            })),
+                            groceryList: rawPlanData.groceryList.map(item => ({ ...item, checked: false }))
+                        };
+                        await savePlan(newPlanData, nextWeekNumber);
+                        loadAndRenderPlan(nextWeekNumber);
+                    }
+                } catch (error) {
+                    console.error("Failed to generate next week's plan:", error);
+                    showError(`An error occurred while generating the next week's plan: ${error.message}`);
+                } finally {
+                    setWeekLoading(false);
+                }
+            }
+        });
+
+        // Event listener for "Back to Profiles" button
+        backToSetupBtn.addEventListener('click', () => {
+            showPage('setup');
+        });
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                btnText.textContent = 'Generating...';
+                loadingSpinner.classList.remove('hidden');
+                generateBtn.disabled = true;
+                viewPlanBtn.disabled = true;
+                prevWeekBtn.disabled = true;
+                nextWeekBtn.disabled = true;
+                promptInput1.disabled = true;
+                promptInput2.disabled = true;
+                profileNameInput.disabled = true;
+                profileSelect.disabled = true;
+                saveProfileBtn.disabled = true;
+                deleteProfileBtn.disabled = true;
+                newProfileBtn.disabled = true;
+                backToSetupBtn.disabled = true;
+            } else {
+                loadingSpinner.classList.add('hidden');
+                generateBtn.disabled = false;
+                viewPlanBtn.disabled = false;
+                promptInput1.disabled = false;
+                promptInput2.disabled = false;
+                profileNameInput.disabled = false;
+                profileSelect.disabled = false;
+                saveProfileBtn.disabled = false;
+                deleteProfileBtn.disabled = false;
+                newProfileBtn.disabled = false;
+                backToSetupBtn.disabled = false;
+                updateWeekNavigation();
+            }
         }
         
-        window.downloadShoppingList = () => {
-            showToast("Download functionality is not implemented yet.", 'error');
-        };
-
-        window.shareShoppingList = () => {
-            showToast("Share functionality is not implemented yet.", 'error');
-        };
-
-        window.openGroupPlanModal = () => {
-            const list = document.getElementById('group-profiles-list');
-            if (list) {
-                const profilesHtml = profiles.map(p => `
-                    <div class="flex items-center gap-2">
-                        <input type="checkbox" id="group-profile-${p.id}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" data-id="${p.id}" ${p.id === currentProfile.id ? 'checked' : ''}>
-                        <label for="group-profile-${p.id}" class="text-sm font-medium text-gray-700">${p.name}</label>
-                    </div>
-                `).join('');
-                list.innerHTML = profilesHtml;
-            }
-            openModal('group-plan-modal');
-        };
-
-        window.generateGroupPlan = () => {
-            const selectedProfileIds = Array.from(document.querySelectorAll('#group-profiles-list input:checked'))
-                .map(checkbox => checkbox.dataset.id);
-            if (selectedProfileIds.length > 0) {
-                generateMealPlan(selectedProfileIds);
+        function setWeekLoading(isLoading) {
+            if (isLoading) {
+                weekSpinner.classList.remove('hidden');
+                prevWeekBtn.disabled = true;
+                nextWeekBtn.disabled = true;
             } else {
-                showToast("Please select at least one profile.", 'error');
+                weekSpinner.classList.add('hidden');
+                updateWeekNavigation();
             }
-        };
+        }
 
-        window.showWorkoutDetailsForDay = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
+        function showError(message, color = "red") {
+            errorMessage.textContent = message;
+            errorBox.classList.remove('hidden');
+            if (color === "green") {
+                errorBox.classList.remove('bg-red-100', 'border-red-400', 'text-red-700');
+                errorBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
             } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
+                errorBox.classList.remove('bg-green-100', 'border-red-400', 'text-red-700');
+                errorBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
             }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newCompletedWorkouts });
-            }
-            
-            const isCompleted = newCompletedWorkouts.includes(dayIndex);
-            const completionStatus = document.getElementById('workout-completion-status');
-            if (completionStatus) {
-                completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-                completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-            }
-            
-            renderPage();
-        };
-
-        const addEventListeners = () => {
-            document.querySelectorAll('#nav-meal-planner, #nav-meal-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'meal-planner'; renderPage(); });
-            document.querySelectorAll('#nav-workout-planner, #nav-workout-planner-mobile').forEach(btn => btn.onclick = () => { currentPage = 'workout-planner'; renderPage(); });
-            document.querySelectorAll('#nav-profiles-mobile, #manage-profiles-btn').forEach(btn => btn.onclick = () => { currentPage = 'profiles'; renderPage(); });
-            document.querySelectorAll('#add-profile-btn').forEach(btn => btn.onclick = () => openModal('profile-modal'));
-
-            const profileForm = document.getElementById('profile-form');
-            if (profileForm) profileForm.onsubmit = saveProfile;
-
-            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
-            if (confirmDeleteBtn) confirmDeleteBtn.onclick = () => deleteProfile(currentEditingProfile.id);
-
-            const generateMealPlanBtn = document.getElementById('generate-meal-plan-btn');
-            if (generateMealPlanBtn) generateMealPlanBtn.onclick = () => generateMealPlan([currentProfile.id]);
-
-            const generateWorkoutPlanBtn = document.getElementById('generate-workout-plan-btn');
-            if (generateWorkoutPlanBtn) generateWorkoutPlanBtn.onclick = generateWorkoutPlan;
-            
-            const openGroupPlanModalBtn = document.getElementById('open-group-plan-modal-btn');
-            if (openGroupPlanModalBtn) openGroupPlanModalBtn.onclick = openGroupPlanModal;
-
-            const generateGroupPlanBtn = document.getElementById('generate-group-plan-btn');
-            if (generateGroupPlanBtn) generateGroupPlanBtn.onclick = generateGroupPlan;
-        };
-        
-        const init = async () => {
-            if (!initFirebase()) {
-                return;
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (!user) {
-                    try {
-                        const token = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-                        if (token) {
-                            await signInWithCustomToken(auth, token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("Firebase Auth Error:", error);
-                        showToast("Failed to authenticate. Please check your Firebase setup.", 'error');
-                        return;
-                    }
-                }
-                userId = auth.currentUser?.uid || 'anonymous-user';
-                document.getElementById('user-id-display').textContent = `User ID: ${userId}`;
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/profiles`), (snapshot) => {
-                    profiles = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
-                    if (!currentProfile && profiles.length > 0) {
-                        currentProfile = profiles[0];
-                    } else if (currentProfile && !profiles.find(p => p.id === currentProfile.id)) {
-                        currentProfile = profiles[0] || null;
-                    }
-                    renderPage();
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/mealPlans`), (snapshot) => {
-                    const mealPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (mealPlans.length > 0) {
-                        mealPlan = mealPlans[0];
-                        if (currentPage === 'meal-planner') {
-                            activeTabIndex = mealPlan.weeklyPlan[0].day;
-                            renderPage();
-                        }
-                    }
-                });
-                
-                onSnapshot(collection(db, `artifacts/${appId}/users/${userId}/workoutPlans`), (snapshot) => {
-                    const workoutPlans = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    if (workoutPlans.length > 0) {
-                        workoutPlan = workoutPlans[0];
-                        if (currentPage === 'workout-planner') renderPage();
-                    }
-                });
-            });
-        };
-
-        window.openProfileModal = () => openModal('profile-modal');
-        window.editProfile = (profileId) => {
-            const profile = profiles.find(p => p.id === profileId);
-            if (profile) openModal('profile-modal', profile);
-        };
-        window.switchProfile = (profileId) => {
-            currentProfile = profiles.find(p => p.id === profileId);
-            if (currentProfile) {
-                showToast(`Active profile switched to ${currentProfile.name}.`);
-                renderPage();
-            }
-        };
-        window.closeModal = (id) => closeModal(id);
-
-        window.switchMealDay = (day) => {
-            activeTabIndex = day;
-            const mealDayContent = document.getElementById('meal-day-content');
-            if (mealDayContent) {
-                mealDayContent.innerHTML = getMealDayContentHTML();
-                lucide.createIcons();
-            }
-        };
-
-        window.switchWorkoutDay = (day) => {
-            activeTabIndex = day;
-            const workoutPlannerTabs = document.getElementById('workout-planner-tabs');
-            if (workoutPlannerTabs) {
-                document.querySelectorAll('#workout-planner-tabs button').forEach(btn => {
-                    if (btn.textContent.includes(day)) {
-                        btn.classList.add('bg-blue-600', 'text-white');
-                        btn.classList.remove('text-gray-500', 'hover:bg-gray-200');
-                    } else {
-                        btn.classList.remove('bg-blue-600', 'text-white');
-                        btn.classList.add('text-gray-500', 'hover:bg-gray-200');
-                    }
-                });
-            }
-            renderPage();
-        };
-
-        window.showWorkoutDetails = (dayIndex) => {
-            if (!workoutPlan || !workoutPlan.monthlyPlan[dayIndex]) {
-                showToast("No workout plan for this day.", 'error');
-                return;
-            }
-
-            const dayPlan = workoutPlan.monthlyPlan[dayIndex];
-            const modalTitle = document.getElementById('workout-details-modal-title');
-            const modalContent = document.getElementById('workout-details-modal-content');
-            const completionToggle = document.getElementById('mark-workout-complete-toggle');
-            const completionStatus = document.getElementById('workout-completion-status');
-
-            modalTitle.textContent = `${dayPlan.day}: ${dayPlan.focus}`;
-            if (dayPlan.exercises.length > 0) {
-                modalContent.innerHTML = dayPlan.exercises.map(exercise => `
-                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 class="font-semibold text-lg mb-1">${exercise.name}</h4>
-                        <p class="text-gray-600 mb-2">${exercise.description}</p>
-                        <ul class="text-sm text-gray-500 space-y-1">
-                            <li>Sets: ${exercise.sets}</li>
-                            <li>Reps: ${exercise.reps}</li>
-                            <li>Rest: ${exercise.rest}</li>
-                        </ul>
-                    </div>
-                `).join('');
-            } else {
-                modalContent.innerHTML = `<p class="text-center text-gray-500">Enjoy your rest day!</p>`;
-            }
-
-            const isCompleted = workoutPlan.completedWorkouts.includes(dayIndex);
-            completionToggle.checked = isCompleted;
-            completionStatus.textContent = isCompleted ? 'Completed!' : 'Not Completed';
-            completionStatus.className = `text-sm font-medium ${isCompleted ? 'text-green-600' : 'text-gray-500'}`;
-
-            completionToggle.onchange = () => {
-                toggleWorkoutCompletion(dayIndex);
-            };
-
-            openModal('workout-details-modal');
-        };
-
-        window.toggleWorkoutCompletion = (dayIndex) => {
-            if (!workoutPlan) return;
-            const newCompletedWorkouts = workoutPlan.completedWorkouts.includes(dayIndex)
-                ? workoutPlan.completedWorkouts.filter(d => d !== dayIndex)
-                : [...workoutPlan.completedWorkouts, dayIndex];
-            workoutPlan.completedWorkouts = newCompletedWorkouts;
-            
-            if (workoutPlan.id) {
-                const docRef = doc(db, `artifacts/${appId}/users/${userId}/workoutPlans`, workoutPlan.id);
-                updateDoc(docRef, { completedWorkouts: newComple
+        }
+
+        function hideError() {
+            errorBox.classList.add('hidden');
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            userDetailsModal.classList.add('hidden');
+        });
+
+        setupAuthAndFirestore();
+    </script>
+</body>
+</html>
